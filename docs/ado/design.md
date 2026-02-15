@@ -53,12 +53,11 @@ org: MyOrganization
 
 ## Technical Implementation Notes
 
-- Use Typer for CLI framework
-- Use pydantic-settings for configuration management
-- Use platformdirs to get the correct config directory path
-- Use PyYAML for reading/writing YAML configuration files
-- Config model should use `BaseSettings` from pydantic-settings
+See [../cli_design.md](../cli_design.md) for common CLI implementation patterns.
+
+**ADO-specific notes:**
 - The config file should be readable and writable using YAML operations
+- When updating config, merge with existing values (don't overwrite entire file)
 
 ## Future Considerations
 
