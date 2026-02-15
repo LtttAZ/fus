@@ -46,7 +46,7 @@ class TestConfigSetSingleOption:
 
     def test_set_project_only(self, runner, mock_config_dir):
         """Test setting only the project configuration."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         result = runner.invoke(app, ["config", "set", "--project", "MyProject"])
 
@@ -61,7 +61,7 @@ class TestConfigSetSingleOption:
 
     def test_set_org_only(self, runner, mock_config_dir):
         """Test setting only the org configuration."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         result = runner.invoke(app, ["config", "set", "--org", "MyOrganization"])
 
@@ -80,7 +80,7 @@ class TestConfigSetMultipleOptions:
 
     def test_set_project_and_org(self, runner, mock_config_dir):
         """Test setting both project and org configuration."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         result = runner.invoke(app, ["config", "set", "--project", "MyProject", "--org", "MyOrg"])
 
@@ -102,7 +102,7 @@ class TestConfigSetMerging:
 
     def test_update_preserves_existing_values(self, runner, mock_config_dir):
         """Test that updating one value preserves other existing values."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         # First, set both project and org
         runner.invoke(app, ["config", "set", "--project", "Project1", "--org", "Org1"])
@@ -121,7 +121,7 @@ class TestConfigSetMerging:
 
     def test_update_multiple_preserves_others(self, runner, mock_config_dir):
         """Test updating multiple values while preserving others."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         # Set initial config with project and org
         config_path = get_config_path(mock_config_dir)
@@ -145,7 +145,7 @@ class TestConfigSetDirectoryCreation:
 
     def test_creates_config_directory(self, runner, temp_config_dir):
         """Test that the config directory is created if it doesn't exist."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         # Ensure the directory doesn't exist
         config_dir = Path(temp_config_dir) / "fus"
@@ -166,7 +166,7 @@ class TestConfigSetErrors:
 
     def test_no_options_provided(self, runner, mock_config_dir):
         """Test that an error is shown when no options are provided."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         result = runner.invoke(app, ["config", "set"])
 
@@ -179,7 +179,7 @@ class TestConfigSetOutput:
 
     def test_success_message_format(self, runner, mock_config_dir):
         """Test that success message follows the correct format."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         result = runner.invoke(app, ["config", "set", "--project", "TestProject"])
 
@@ -188,7 +188,7 @@ class TestConfigSetOutput:
 
     def test_success_message_multiple_values(self, runner, mock_config_dir):
         """Test success message with multiple values."""
-        from src.ado.ado import app
+        from src.cli.ado import app
 
         result = runner.invoke(app, ["config", "set", "--project", "Proj", "--org", "Org"])
 

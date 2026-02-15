@@ -29,7 +29,7 @@ poetry install
 Each CLI is run directly using Python:
 
 ```bash
-poetry run python src/<cli_name>/<cli_name>.py [args]
+poetry run python src/cli/<cli_name>.py [args]
 ```
 
 ## Project Structure
@@ -40,13 +40,12 @@ fus/
 │   └── <cli_name>/         # Design docs for specific CLI
 │       └── design.md       # Feature design document
 ├── src/                     # Source code
-│   ├── common/             # Shared modules used by multiple CLIs
+│   ├── cli/                # CLI entry points
 │   │   ├── __init__.py
-│   │   └── ...             # Common utilities, helpers, etc.
-│   └── <cli_name>/         # Each CLI in its own directory
+│   │   └── <cli_name>.py   # CLI entry point (e.g., ado.py)
+│   └── common/             # Shared modules used by multiple CLIs
 │       ├── __init__.py
-│       ├── <cli_name>.py   # Main CLI entry point
-│       └── ...             # Supporting modules
+│       └── ...             # Common utilities, helpers, etc.
 ├── tests/                   # Integration tests
 │   ├── common/             # Tests for common modules
 │   │   └── test_*.py
@@ -70,6 +69,6 @@ See [CLAUDE.md](CLAUDE.md) for detailed development guidelines.
 ## Adding a New CLI
 
 1. Create design document: `docs/<cli_name>/design.md`
-2. Create CLI directory: `src/<cli_name>/`
+2. Create CLI entry point: `src/cli/<cli_name>.py`
 3. Create test directory: `tests/<cli_name>/`
 4. Follow the TDD workflow
