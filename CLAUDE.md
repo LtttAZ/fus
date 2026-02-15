@@ -10,7 +10,7 @@ This is a Python CLI project named "fus" using Poetry for dependency management.
 
 **Running CLIs:**
 ```bash
-poetry run python <cli_script>.py [args]
+poetry run python src/cli/<cli_name>.py [args]
 ```
 
 ## Development Setup
@@ -60,7 +60,7 @@ The project strictly requires Python 3.13.2 (not >=3.13, but ==3.13.2). This is 
 **Configuration Management:**
 - **pydantic-settings**: Type-safe config management using Pydantic models
 - **platformdirs**: Cross-platform config directory paths
-- Config files stored in `~/.fus/<cli>.config` (Unix) or `AppData/Local/fus/<cli>.config` (Windows)
+- Config files stored in `~/.fus/<cli>.yaml` (Unix) or `AppData/Local/fus/<cli>.yaml` (Windows) in YAML format
 - Easy to override config directory in tests for isolation
 
 Example config pattern:
@@ -74,7 +74,7 @@ class CliConfig(BaseSettings):
 
     class Config:
         # Override in tests by passing different path
-        env_file = Path(user_config_dir("fus")) / "cli.config"
+        env_file = Path(user_config_dir("fus")) / "cli.yaml"
 ```
 
 ## Development Workflow
