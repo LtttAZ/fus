@@ -1,0 +1,15 @@
+[project]
+name = "fus"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "LtttAZ",email = "louis_zhang_1303@126.com"}
+]
+requires-python = "==3.13.2"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
