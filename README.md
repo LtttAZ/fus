@@ -10,6 +10,9 @@ A collection of Python CLI tools.
 ## Technology Stack
 
 - **CLI Framework**: Typer - Modern CLI framework with type hints and built-in testing support
+- **Configuration Management**:
+  - pydantic-settings - Type-safe config management with validation
+  - platformdirs - Cross-platform config directory paths (~/.fus on Unix, AppData on Windows)
 
 ## Setup
 

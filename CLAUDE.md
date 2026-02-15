@@ -57,6 +57,26 @@ The project strictly requires Python 3.13.2 (not >=3.13, but ==3.13.2). This is 
 - Built-in `CliRunner` for easy integration testing
 - Rich terminal output support
 
+**Configuration Management:**
+- **pydantic-settings**: Type-safe config management using Pydantic models
+- **platformdirs**: Cross-platform config directory paths
+- Config files stored in `~/.fus/<cli>.config` (Unix) or `AppData/Local/fus/<cli>.config` (Windows)
+- Easy to override config directory in tests for isolation
+
+Example config pattern:
+```python
+from pydantic_settings import BaseSettings
+from platformdirs import user_config_dir
+
+class CliConfig(BaseSettings):
+    api_key: str
+    timeout: int = 30
+
+    class Config:
+        # Override in tests by passing different path
+        env_file = Path(user_config_dir("fus")) / "cli.config"
+```
+
 ## Development Workflow
 
 This project follows a **document-first, test-driven development** approach:
