@@ -26,7 +26,7 @@ def runner():
 @pytest.fixture
 def mock_config_dir(temp_config_dir):
     """Mock platformdirs.user_config_dir to return temp directory."""
-    with patch('platformdirs.user_config_dir', return_value=temp_config_dir):
+    with patch('src.cli.ado.user_config_dir', return_value=temp_config_dir):
         yield temp_config_dir
 
 
@@ -151,7 +151,7 @@ class TestConfigSetDirectoryCreation:
         config_dir = Path(temp_config_dir) / "fus"
         assert not config_dir.exists()
 
-        with patch('platformdirs.user_config_dir', return_value=str(config_dir)):
+        with patch('src.cli.ado.user_config_dir', return_value=str(config_dir)):
             result = runner.invoke(app, ["config", "set", "--project", "MyProject"])
 
         assert result.exit_code == 0
