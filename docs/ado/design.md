@@ -7,44 +7,48 @@ The `ado` CLI provides commands for interacting with Azure DevOps. This document
 ## Command Structure
 
 ```bash
-ado config set --project=<project>
+ado config set [--project=<project>] [--org=<organization>]
 ```
 
 ## Features
 
 ### Config Set Command
 
-**Purpose**: Store Azure DevOps project configuration for the CLI.
+**Purpose**: Store Azure DevOps configuration values for the CLI.
 
 **Command**: `ado config set`
 
 **Options**:
-- `--project` (required): The Azure DevOps project name to store in configuration
+- `--project` (optional): The Azure DevOps project name to store in configuration
+- `--org` (optional): The Azure DevOps organization name to store in configuration
 
 **Behavior**:
-1. Accepts a project name via the `--project` option
-2. Stores the project value in a configuration file at `~/.fus/ado.config`
-3. Creates the `~/.fus/` directory if it doesn't exist
-4. Creates or overwrites the `ado.config` file with the new project value
-5. Displays success message: "Configuration saved: project=<project>"
+1. Accepts one or more configuration options (--project, --org, etc.)
+2. At least one option must be provided
+3. Stores the provided values in a configuration file at `~/.fus/ado.yaml`
+4. Creates the `~/.fus/` directory if it doesn't exist
+5. If `ado.yaml` exists, updates only the specified values (preserves other existing values)
+6. If `ado.yaml` doesn't exist, creates it with the provided values
+7. Displays success message listing the saved values, e.g., "Configuration saved: project=MyProject, org=MyOrg"
 
 **Exit Codes**:
 - `0`: Success
-- `1`: Error (missing required option, filesystem error, etc.)
+- `1`: Error (no options provided, filesystem error, etc.)
 
 **Error Handling**:
-- If `--project` option is not provided, display error and exit with code 1
+- If no options are provided, display error message "At least one configuration option must be provided" and exit with code 1
 - If filesystem errors occur (permissions, disk full, etc.), display error message and exit with code 1
 
 ## Configuration File Format
 
-**Location**: `~/.fus/ado.config` (Unix/Linux/macOS) or `%LOCALAPPDATA%\fus\ado.config` (Windows)
+**Location**: `~/.fus/ado.yaml` (Unix/Linux/macOS) or `%LOCALAPPDATA%\fus\ado.yaml` (Windows)
 
 **Format**: YAML
 
-Example `ado.config`:
+Example `ado.yaml`:
 ```yaml
 project: MyProject
+org: MyOrganization
 ```
 
 ## Technical Implementation Notes
