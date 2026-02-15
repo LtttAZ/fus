@@ -4,7 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Python project named "fus" using Poetry for dependency management. The project requires Python 3.13.2 exactly.
+This is a Python CLI project named "fus" using Poetry for dependency management. The project requires Python 3.13.2 exactly.
+
+**Multiple CLIs:** This repository contains multiple CLI tools. Each CLI is run directly using Python (not compiled to executables).
+
+**Running CLIs:**
+```bash
+poetry run python <cli_script>.py [args]
+```
 
 ## Development Setup
 
@@ -41,3 +48,25 @@ poetry install
 ## Python Version
 
 The project strictly requires Python 3.13.2 (not >=3.13, but ==3.13.2). This is specified in `pyproject.toml`.
+
+## Development Workflow
+
+This project follows a **document-first, test-driven development** approach:
+
+### 1. Design Document Phase
+- Co-author design documents for new features/CLIs
+- Document should clearly define requirements, behavior, and interfaces
+- Get approval before proceeding to tests
+
+### 2. Test-Driven Development (TDD)
+- Create integration tests based on the approved design document
+- Tests should cover the behavior specified in the design
+- User reviews and approves tests before implementation
+
+### 3. Implementation
+- Implement features only after tests are approved
+- Code should make the tests pass
+
+### Testing Guidelines
+- Write integration tests that verify end-to-end CLI behavior
+- Tests must be approved before starting implementation
