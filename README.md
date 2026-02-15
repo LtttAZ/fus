@@ -7,6 +7,10 @@ A collection of Python CLI tools.
 - Python 3.13.2 (exact version)
 - Poetry for dependency management
 
+## Technology Stack
+
+- **CLI Framework**: Typer - Modern CLI framework with type hints and built-in testing support
+
 ## Setup
 
 ```bash

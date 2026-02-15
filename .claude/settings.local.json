@@ -4,7 +4,8 @@
       "Bash(python -m venv:*)",
       "Bash(source .venv/Scripts/activate)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(poetry add:*)"
     ]
   }
 }

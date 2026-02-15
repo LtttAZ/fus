@@ -49,6 +49,14 @@ poetry install
 
 The project strictly requires Python 3.13.2 (not >=3.13, but ==3.13.2). This is specified in `pyproject.toml`.
 
+## Technology Stack
+
+**CLI Framework:** Typer
+- Modern CLI framework built on Click
+- Uses type hints for parameter validation
+- Built-in `CliRunner` for easy integration testing
+- Rich terminal output support
+
 ## Development Workflow
 
 This project follows a **document-first, test-driven development** approach:
@@ -69,4 +77,14 @@ This project follows a **document-first, test-driven development** approach:
 
 ### Testing Guidelines
 - Write integration tests that verify end-to-end CLI behavior
+- Use Typer's `CliRunner` to invoke commands programmatically in tests
 - Tests must be approved before starting implementation
+
+Example test pattern:
+```python
+from typer.testing import CliRunner
+runner = CliRunner()
+result = runner.invoke(app, ["arg1", "arg2"])
+assert result.exit_code == 0
+assert "expected output" in result.stdout
+```
