@@ -58,11 +58,3 @@ See [../cli_design.md](../cli_design.md) for common CLI implementation patterns.
 **ADO-specific notes:**
 - The config file should be readable and writable using YAML operations
 - When updating config, merge with existing values (don't overwrite entire file)
-
-## Future Considerations
-
-- Additional config options (organization, PAT token, default work item type, etc.)
-- `ado config get` command to retrieve config values
-- `ado config list` command to show all configuration
-- `ado config unset` command to remove config values
-- Validation of project name format (if Azure DevOps has requirements)
