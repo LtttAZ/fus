@@ -1,5 +1,7 @@
 # ADO CLI Design Document
 
+**ADO** = Azure DevOps
+
 ## Overview
 
 The `ado` CLI provides commands for interacting with Azure DevOps. This document defines the initial `config set` command for managing CLI configuration.
