@@ -33,11 +33,16 @@ fus/
 │   └── <cli_name>/         # Design docs for specific CLI
 │       └── design.md       # Feature design document
 ├── src/                     # Source code
+│   ├── common/             # Shared modules used by multiple CLIs
+│   │   ├── __init__.py
+│   │   └── ...             # Common utilities, helpers, etc.
 │   └── <cli_name>/         # Each CLI in its own directory
 │       ├── __init__.py
 │       ├── <cli_name>.py   # Main CLI entry point
 │       └── ...             # Supporting modules
 ├── tests/                   # Integration tests
+│   ├── common/             # Tests for common modules
+│   │   └── test_*.py
 │   └── <cli_name>/         # Tests for specific CLI
 │       └── test_*.py       # Test files
 ├── pyproject.toml          # Poetry configuration
