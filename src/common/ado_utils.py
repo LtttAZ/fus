@@ -66,3 +66,19 @@ def build_ado_repo_url(server: str, org: str, project: str, repo: str, branch: O
         return f"{base_url}?version=GB{branch}"
 
     return base_url
+
+
+def build_ado_workitem_url(server: str, org: str, project: str, workitem_id: int) -> str:
+    """
+    Build Azure DevOps work item URL.
+
+    Args:
+        server: Server base URL (e.g., "https://dev.azure.com" or on-premises server)
+        org: Organization name
+        project: Project name
+        workitem_id: Work item ID
+
+    Returns:
+        Full Azure DevOps work item URL
+    """
+    return f"{server}/{org}/{project}/_workitems/edit/{workitem_id}"

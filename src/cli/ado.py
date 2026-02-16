@@ -6,7 +6,7 @@ from typing import Optional
 from pathlib import Path
 from src.common.ado_config import get_config_path, read_config, write_config
 from src.common.git_utils import is_git_repository, get_remote_url, get_current_branch
-from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url
+from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url, build_ado_workitem_url
 
 app = typer.Typer(help="Azure DevOps CLI tool")
 config_app = typer.Typer(help="Manage configuration")
@@ -14,6 +14,10 @@ app.add_typer(config_app, name="config")
 
 repo_app = typer.Typer(help="Repository commands")
 app.add_typer(repo_app, name="repo")
+
+workitem_app = typer.Typer(help="Work item commands")
+app.add_typer(workitem_app, name="workitem")
+app.add_typer(workitem_app, name="wi")
 
 
 @config_app.command("set")
@@ -81,6 +85,36 @@ def repo_browse(
 
     # Build URL
     url = build_ado_repo_url(server, org, project, repo, branch_to_use)
+
+    # Display and open
+    typer.echo(f"Opening: {url}")
+    webbrowser.open(url)
+
+
+@workitem_app.command("browse")
+def workitem_browse(
+    id: int = typer.Option(..., "--id", help="Work item ID"),
+) -> None:
+    """Open a work item in the default web browser."""
+    # Read config
+    config_path = get_config_path()
+    config = read_config(config_path)
+
+    # Check for required config values
+    server = config.get("server", "https://dev.azure.com")
+    org = config.get("org")
+    project = config.get("project")
+
+    if not org:
+        typer.echo("Error: Organization not configured. Use 'ado config set --org <org>' to set it.")
+        raise typer.Exit(code=1)
+
+    if not project:
+        typer.echo("Error: Project not configured. Use 'ado config set --project <project>' to set it.")
+        raise typer.Exit(code=1)
+
+    # Build URL
+    url = build_ado_workitem_url(server, org, project, id)
 
     # Display and open
     typer.echo(f"Opening: {url}")
