@@ -46,8 +46,15 @@ class TestAdoClientInitialization:
 
     @patch.dict(os.environ, {"ADO_PAT": "test-token"})
     @patch("src.common.ado_client.Connection")
-    def test_init_with_default_config(self, mock_connection):
+    @patch("src.common.ado_config.read_config")
+    def test_init_with_default_config(self, mock_read_config, mock_connection):
         """Test initialization with default config."""
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
         client = AdoClient()
 
         assert client.config is not None

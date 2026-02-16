@@ -59,9 +59,16 @@ class TestRepoListBasic:
 
     @patch.dict(os.environ, {"ADO_PAT": "test-token"})
     @patch("src.common.ado_client.Connection")
-    def test_list_repos_default_columns(self, mock_connection, runner, mock_git_repositories):
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_default_columns(self, mock_read_config, mock_connection, runner, mock_git_repositories):
         """Test listing repos with default columns (id, name)."""
         from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
 
         # Setup mocks
         mock_git_client = Mock()
@@ -90,9 +97,16 @@ class TestRepoListBasic:
 
     @patch.dict(os.environ, {"ADO_PAT": "test-token"})
     @patch("src.common.ado_client.Connection")
-    def test_list_repos_empty_project(self, mock_connection, runner):
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_empty_project(self, mock_read_config, mock_connection, runner):
         """Test listing repos when project has no repos."""
         from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
 
         # Setup mocks
         mock_git_client = Mock()
@@ -263,9 +277,16 @@ class TestRepoListRowID:
 
     @patch.dict(os.environ, {"ADO_PAT": "test-token"})
     @patch("src.common.ado_client.Connection")
-    def test_list_repos_has_row_id_column(self, mock_connection, runner, mock_git_repositories):
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_has_row_id_column(self, mock_read_config, mock_connection, runner, mock_git_repositories):
         """Test that table always includes row ID column."""
         from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
 
         # Setup mocks
         mock_git_client = Mock()
@@ -291,9 +312,16 @@ class TestRepoListErrors:
     """Test error handling."""
 
     @patch.dict(os.environ, {}, clear=True)
-    def test_list_repos_missing_pat(self, runner):
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_missing_pat(self, mock_read_config, runner):
         """Test error when ADO_PAT is not set."""
         from src.cli.ado import app
+
+        # Setup config with org and project so we reach PAT check
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
 
         result = runner.invoke(app, ["repo", "list"])
 
