@@ -69,21 +69,36 @@ The project strictly requires Python 3.13.2 (not >=3.13, but ==3.13.2). This is 
 **Configuration Management:**
 - **pydantic-settings**: Type-safe config management using Pydantic models
 - **platformdirs**: Cross-platform config directory paths
+- **PyYAML**: YAML format for configuration files
 - Config files stored in `~/.fus/<cli>.yaml` (Unix) or `AppData/Local/fus/<cli>.yaml` (Windows) in YAML format
 - Easy to override config directory in tests for isolation
 
+**Code Organization:**
+- **Segregation of Duties**: CLI entry points (`src/cli/`) define only the CLI structure (commands, options). Business logic and CRUD operations are implemented in common modules (`src/common/`).
+- CLI files should be minimal and focused on Typer definitions
+- Common modules provide reusable functions for config management, data operations, etc.
+- See [docs/cli_design.md](docs/cli_design.md) for detailed patterns
+
 Example config pattern:
 ```python
-from pydantic_settings import BaseSettings
+# src/common/<cli>_config.py - Business logic
+from pathlib import Path
 from platformdirs import user_config_dir
+import yaml
 
-class CliConfig(BaseSettings):
-    api_key: str
-    timeout: int = 30
+def get_config_path() -> Path:
+    return Path(user_config_dir("fus")) / "cli.yaml"
 
-    class Config:
-        # Override in tests by passing different path
-        env_file = Path(user_config_dir("fus")) / "cli.yaml"
+def read_config(config_path: Path) -> dict:
+    if not config_path.exists():
+        return {}
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f) or {}
+
+def write_config(config_path: Path, config: dict) -> None:
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_path, 'w') as f:
+        yaml.dump(config, f)
 ```
 
 ## Development Workflow

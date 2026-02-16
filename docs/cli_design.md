@@ -2,6 +2,59 @@
 
 This document contains common design patterns and technical implementation notes that apply to all CLIs in this project.
 
+## Code Organization Pattern
+
+### Segregation of Duties
+
+The project follows a clear separation of concerns:
+
+**CLI Entry Points (`src/cli/<cli_name>.py`)**:
+- Define CLI structure using Typer (commands, subcommands, options)
+- Handle user input validation and command routing
+- Display output and error messages
+- Keep business logic minimal - delegate to common modules
+
+**Common Modules (`src/common/`)**:
+- Implement business logic, data operations, and CRUD functions
+- Handle configuration file reading/writing
+- Provide reusable utilities and helpers
+- Can be tested independently of CLI interface
+
+**Example**:
+```python
+# src/cli/ado.py - CLI definition only
+import typer
+from src.common.ado_config import get_config_path, read_config, write_config
+
+@config_app.command("set")
+def config_set(project: Optional[str] = typer.Option(None, "--project")):
+    config_path = get_config_path()
+    config = read_config(config_path)
+    if project:
+        config["project"] = project
+    write_config(config_path, config)
+    typer.echo(f"Configuration saved: project={project}")
+
+# src/common/ado_config.py - Business logic
+def get_config_path() -> Path:
+    """Get the path to the ado.yaml config file."""
+    return Path(user_config_dir("fus")) / "ado.yaml"
+
+def read_config(config_path: Path) -> dict:
+    """Read and parse the YAML config file."""
+    # ... implementation ...
+
+def write_config(config_path: Path, config: dict) -> None:
+    """Write config dictionary to YAML file."""
+    # ... implementation ...
+```
+
+This separation provides:
+- **Reusability**: Common modules can be shared across CLIs
+- **Testability**: Business logic can be tested independently
+- **Maintainability**: Clear boundaries between interface and implementation
+- **Clarity**: CLI files show structure at a glance
+
 ## Common Technical Stack
 
 All CLIs in this project use the following technologies:
