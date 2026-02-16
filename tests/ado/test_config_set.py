@@ -250,3 +250,100 @@ class TestConfigSetOutput:
         # Both values should be in the message
         assert "project=Proj" in result.stdout
         assert "org=Org" in result.stdout
+
+
+class TestConfigSetRepoOptions:
+    """Test repo-specific configuration options."""
+
+    def test_set_repo_columns_only(self, runner, mock_config_dir):
+        """Test setting repo columns only."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--repo-columns", "name,url"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved: repo.columns=name,url" in result.stdout
+
+        # Verify config file
+        config_path = get_config_path(mock_config_dir)
+        config = read_config(config_path)
+        assert "repo" in config
+        assert config["repo"]["columns"] == "name,url"
+
+    def test_set_repo_column_names_only(self, runner, mock_config_dir):
+        """Test setting repo column names only."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--repo-column-names", "Repository,URL"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved: repo.column-names=Repository,URL" in result.stdout
+
+        # Verify config file
+        config_path = get_config_path(mock_config_dir)
+        config = read_config(config_path)
+        assert "repo" in config
+        assert config["repo"]["column-names"] == "Repository,URL"
+
+    def test_set_repo_columns_and_names(self, runner, mock_config_dir):
+        """Test setting both repo columns and column names."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--repo-columns", "name,web_url", "--repo-column-names", "Name,URL"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved:" in result.stdout
+        assert "repo.columns=name,web_url" in result.stdout
+        assert "repo.column-names=Name,URL" in result.stdout
+
+        # Verify config file
+        config_path = get_config_path(mock_config_dir)
+        config = read_config(config_path)
+        assert "repo" in config
+        assert config["repo"]["columns"] == "name,web_url"
+        assert config["repo"]["column-names"] == "Name,URL"
+
+    def test_set_repo_options_with_top_level(self, runner, mock_config_dir):
+        """Test setting repo options along with top-level config."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--org", "MyOrg", "--repo-columns", "id,name"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved:" in result.stdout
+        assert "org=MyOrg" in result.stdout
+        assert "repo.columns=id,name" in result.stdout
+
+        # Verify config file
+        config_path = get_config_path(mock_config_dir)
+        config = read_config(config_path)
+        assert config["org"] == "MyOrg"
+        assert config["repo"]["columns"] == "id,name"
+
+    def test_update_repo_columns_preserves_column_names(self, runner, mock_config_dir):
+        """Test updating repo columns preserves existing column names."""
+        from src.cli.ado import app
+
+        # Set initial config
+        config_path = get_config_path(mock_config_dir)
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        initial_config = {
+            "org": "TestOrg",
+            "repo": {
+                "columns": "name,id",
+                "column-names": "Name,ID"
+            }
+        }
+        with open(config_path, 'w') as f:
+            yaml.dump(initial_config, f)
+
+        # Update only columns
+        result = runner.invoke(app, ["config", "set", "--repo-columns", "name,url"])
+
+        assert result.exit_code == 0
+
+        # Verify column names are preserved
+        config = read_config(config_path)
+        assert config["repo"]["columns"] == "name,url"
+        assert config["repo"]["column-names"] == "Name,ID"  # Preserved
+
