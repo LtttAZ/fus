@@ -37,6 +37,8 @@ poetry install
 
 ### Common Commands
 
+**IMPORTANT: Always use Poetry for dependency management, never use pip directly.**
+
 ```bash
 # Add a new dependency
 poetry add <package>
@@ -46,6 +48,9 @@ poetry add --group dev <package>
 
 # Update dependencies
 poetry update
+
+# CRITICAL: Always run poetry lock after adding/updating dependencies
+poetry lock
 
 # Run a command in the Poetry environment
 poetry run python <script>
@@ -58,6 +63,13 @@ poetry install
 .venv/Scripts/python -m pytest -v        # Verbose output
 .venv/Scripts/python -m pytest tests/ado/ # ADO tests only
 ```
+
+**Dependency Management Rules:**
+- ✅ **DO**: Use `poetry add` to add dependencies
+- ✅ **DO**: Run `poetry lock` after any dependency changes to update lock file
+- ✅ **DO**: Commit both `pyproject.toml` and `poetry.lock` together
+- ❌ **DON'T**: Use `pip install` - it bypasses Poetry's dependency resolution
+- ❌ **DON'T**: Edit `pyproject.toml` manually without running `poetry lock`
 
 ## Python Version
 
@@ -186,20 +198,33 @@ This project follows a **document-first, test-driven development** approach:
 - Code should make the tests pass
 - Keep CLI code concise by delegating to common modules
 - Use configuration classes for validated config access
+- **Run `poetry lock` after any dependency changes**
 
-### 4. Documentation Update **[CRITICAL]**
-- **ALWAYS update design documents after code changes**
-- Update affected design docs to reflect implementation details
-- Document new patterns, classes, or approaches used
-- Keep code examples in docs synchronized with actual code
+### 4. Documentation Update **[CRITICAL - DO NOT SKIP]**
+- **ALWAYS check and update design documents after implementation**
+- This is a required step, not optional - treat it with the same importance as writing tests
+- Review all affected design docs for outdated information:
+  - Command syntax changes
+  - New options or flags
+  - Implementation details (class names, function locations, patterns)
+  - Configuration keys and defaults
+  - Code examples that reference implementation
+- Update docs to reflect actual implementation (not just planned design)
+- Remove outdated information that contradicts current code
 - Cross-reference related documents
 
-**Complete workflow example:**
-1. Write feature design document
-2. Write integration tests
-3. Implement feature
-4. **Update design docs to match implementation**
-5. Commit all changes together
+### 5. Dependency Management
+- **If dependencies were added/updated, run `poetry lock` before committing**
+- Commit `pyproject.toml` and `poetry.lock` together
+
+**Complete workflow checklist:**
+1. ✅ Write feature design document
+2. ✅ Write integration tests
+3. ✅ Implement feature
+4. ✅ **Check if docs need updates** (compare design vs implementation)
+5. ✅ **Update design docs** to match actual implementation
+6. ✅ **Run `poetry lock`** if dependencies changed
+7. ✅ Commit all changes together (code + tests + docs + lock file)
 
 ### Testing Guidelines
 - Write integration tests that verify end-to-end CLI behavior
@@ -251,6 +276,23 @@ docs/ado/
 
 ## Best Practices and Key Patterns
 
+### Critical Rules (DO NOT SKIP)
+
+**1. Always use Poetry for dependency management**
+- Never use `pip install` - always use `poetry add`
+- Run `poetry lock` after any dependency changes
+- Commit both `pyproject.toml` and `poetry.lock` together
+
+**2. Always check if documents need updates after implementation**
+- Review design docs for outdated command syntax, class names, function locations
+- Update docs to match actual implementation (not just planned design)
+- This is required, not optional - treat it like writing tests
+
+**3. Write documentation for experienced developers and AI**
+- Be concise - skip obvious explanations and redundant examples
+- Focus on what's unique to this implementation
+- Assume readers understand basic programming concepts
+
 ### Configuration Management
 1. **Use configuration classes for validation** - Centralize error handling in properties
 2. **Provide helpful error messages** - Guide users to fix configuration issues
@@ -276,10 +318,31 @@ docs/ado/
 4. **Organize by command groups** - e.g., `test_config_set.py`, `test_workitem_browse.py`
 
 ### Documentation Discipline
-1. **Update docs with code changes** - Keep documentation synchronized
-2. **Include code examples** - Show actual usage patterns
-3. **Document the 'why'** - Explain benefits and trade-offs
-4. **Cross-reference** - Link related documents together
+1. **Write for experienced developers and AI** - Be concise, assume knowledge
+   - Skip obvious explanations (e.g., "reads config, merges, writes back")
+   - Avoid redundant examples showing the same concept multiple ways
+   - Focus on what's unique to this implementation, not general programming
+   - Remove verbose step-by-step walkthroughs
+   - Example: "Merges with existing config" not "1. Read config 2. Merge values 3. Write config"
+2. **Update docs with code changes** - Keep documentation synchronized with implementation
+3. **Check after implementation** - Review docs for outdated info (command syntax, class names, function locations)
+4. **Include minimal code examples** - Show actual usage patterns, not full implementations
+5. **Document the 'why'** - Explain benefits and trade-offs, not just the 'what'
+6. **Cross-reference** - Link related documents together
+
+**Documentation Style Guidelines:**
+- ✅ **DO**: Focus on command syntax, options, configuration keys, key implementation components
+- ✅ **DO**: Show brief examples demonstrating actual usage
+- ✅ **DO**: Document defaults, exit codes, and error behaviors concisely
+- ❌ **DON'T**: Include full implementation code listings (that's what the source code is for)
+- ❌ **DON'T**: Show multiple redundant output format examples
+- ❌ **DON'T**: Explain obvious behaviors step-by-step
+- ❌ **DON'T**: List every possible field/property when "any field from X object" suffices
+
+**Target audience**: AI agents and experienced developers who understand:
+- Basic programming concepts (loops, conditionals, error handling)
+- Common patterns (config management, CLI frameworks, testing)
+- Standard library operations (file I/O, JSON parsing, etc.)
 
 ## Continuous Integration
 
