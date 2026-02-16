@@ -74,6 +74,21 @@ class TestConfigSetSingleOption:
         config = read_config(config_path)
         assert config == {"org": "MyOrganization"}
 
+    def test_set_server_only(self, runner, mock_config_dir):
+        """Test setting only the server configuration."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--server", "https://tfs.company.com"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved: server=https://tfs.company.com" in result.stdout
+
+        config_path = get_config_path(mock_config_dir)
+        assert config_path.exists()
+
+        config = read_config(config_path)
+        assert config == {"server": "https://tfs.company.com"}
+
 
 class TestConfigSetMultipleOptions:
     """Test setting multiple configuration options."""
@@ -95,6 +110,25 @@ class TestConfigSetMultipleOptions:
 
         config = read_config(config_path)
         assert config == {"project": "MyProject", "org": "MyOrg"}
+
+    def test_set_all_options(self, runner, mock_config_dir):
+        """Test setting all configuration options at once."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--project", "MyProject", "--org", "MyOrg", "--server", "https://tfs.company.com"])
+
+        assert result.exit_code == 0
+        # Check that all values are in the output (order may vary)
+        assert "Configuration saved:" in result.stdout
+        assert "project=MyProject" in result.stdout
+        assert "org=MyOrg" in result.stdout
+        assert "server=https://tfs.company.com" in result.stdout
+
+        config_path = get_config_path(mock_config_dir)
+        assert config_path.exists()
+
+        config = read_config(config_path)
+        assert config == {"project": "MyProject", "org": "MyOrg", "server": "https://tfs.company.com"}
 
 
 class TestConfigSetMerging:
@@ -138,6 +172,25 @@ class TestConfigSetMerging:
         config = read_config(config_path)
         # Should update project and org, but preserve 'other'
         assert config == {"project": "NewProject", "org": "NewOrg", "other": "preserved"}
+
+    def test_update_preserves_server(self, runner, mock_config_dir):
+        """Test that updating project/org preserves server."""
+        from src.cli.ado import app
+
+        # First, set all three values
+        runner.invoke(app, ["config", "set", "--project", "Project1", "--org", "Org1", "--server", "https://tfs.company.com"])
+
+        # Then update only project
+        result = runner.invoke(app, ["config", "set", "--project", "Project2"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved: project=Project2" in result.stdout
+
+        config_path = get_config_path(mock_config_dir)
+        config = read_config(config_path)
+
+        # Server and org should still be preserved
+        assert config == {"project": "Project2", "org": "Org1", "server": "https://tfs.company.com"}
 
 
 class TestConfigSetDirectoryCreation:
