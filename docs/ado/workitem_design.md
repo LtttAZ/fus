@@ -115,7 +115,7 @@ Opening: https://tfs.company.com/contoso/MyProject/_workitems/edit/67890
 ## Implementation Notes
 
 ### Dependencies
-- `src.common.ado_config`: For `get_config_path()`, `read_config()`
+- `src.common.ado_config`: For `AdoConfig` class
 - `src.common.ado_utils`: For `build_ado_workitem_url()`
 - `webbrowser` module: For opening URLs in default browser
 
@@ -156,15 +156,29 @@ Both aliases use the same Typer app instance, registered twice with different na
 
 ### Configuration Validation
 
-The command validates required configuration values before constructing the URL:
+The command uses the `AdoConfig` class for simplified configuration access with automatic validation:
 
-1. Read config file (returns empty dict if doesn't exist)
-2. Get `server` with default: `config.get("server", "https://dev.azure.com")`
-3. Get `org`: `config.get("org")`
-4. Get `project`: `config.get("project")`
-5. If `org` is None, show error and exit
-6. If `project` is None, show error and exit
-7. Build URL and open browser
+```python
+@workitem_app.command("browse")
+def workitem_browse(id: int = typer.Option(..., "--id", help="Work item ID")):
+    """Open a work item in the default web browser."""
+    config = AdoConfig()
+    url = build_ado_workitem_url(config.server, config.org, config.project, id)
+    typer.echo(f"Opening: {url}")
+    webbrowser.open(url)
+```
+
+**How AdoConfig works:**
+1. Loads configuration from `~/.fus/ado.yaml` automatically
+2. `config.server` - Returns configured server or defaults to `https://dev.azure.com`
+3. `config.org` - Returns org if configured, otherwise exits with helpful error message
+4. `config.project` - Returns project if configured, otherwise exits with helpful error message
+
+**Benefits:**
+- Configuration validation is centralized in the `AdoConfig` class
+- Error handling happens automatically when accessing properties
+- CLI code is concise and readable (4 lines instead of ~25)
+- See [config_design.md](config_design.md) for AdoConfig class details
 
 ## Technical Implementation
 

@@ -88,6 +88,48 @@ def write_config(config_path: Path, config: dict) -> None:
     # Writes config as YAML
 ```
 
+### AdoConfig Class
+
+For commands that need configuration values, use the `AdoConfig` class which provides validated access with automatic error handling:
+
+```python
+class AdoConfig:
+    """ADO configuration with validation and error handling."""
+
+    def __init__(self):
+        """Load configuration from file."""
+        self.config_path = get_config_path()
+        self._data = read_config(self.config_path)
+
+    @property
+    def server(self) -> str:
+        """Get server URL, defaults to Azure DevOps cloud."""
+        return self._data.get("server", "https://dev.azure.com")
+
+    @property
+    def org(self) -> str:
+        """Get organization name, exits with error if not configured."""
+        # Validates and shows error message if not set
+
+    @property
+    def project(self) -> str:
+        """Get project name, exits with error if not configured."""
+        # Validates and shows error message if not set
+```
+
+**Benefits**:
+- Centralizes validation logic and error handling
+- Provides helpful error messages automatically
+- Makes CLI code concise (see [workitem_design.md](workitem_design.md) for example)
+- Server defaults to `https://dev.azure.com` automatically
+
+**Usage in CLI commands**:
+```python
+config = AdoConfig()
+# Access properties - validation happens automatically
+url = build_url(config.server, config.org, config.project, ...)
+```
+
 ### Update Behavior
 
 When updating configuration:
