@@ -6,6 +6,68 @@ The `ado config` commands manage configuration settings for the ADO CLI tool. Co
 
 ## Commands
 
+### config list
+
+**Purpose**: Display all current configuration values in a flattened list format.
+
+**Command**: `ado config list`
+
+**Options**: None
+
+**Behavior**:
+1. Reads configuration from `~/.fus/ado.yaml`
+2. Displays all configuration keys and values in a flattened list format
+3. Shows default value for `server` if not explicitly configured (`https://dev.azure.com`)
+4. If configuration file doesn't exist, displays only the default server value
+5. Output format: `key: value` on separate lines
+
+**Exit Codes**:
+- `0`: Success (always)
+
+**Output Format**:
+
+When configuration file exists with all values:
+```
+server: https://dev.azure.com
+org: MyOrganization
+project: MyProject
+```
+
+When configuration file exists with only org and project:
+```
+server: https://dev.azure.com
+org: MyOrganization
+project: MyProject
+```
+
+When configuration file doesn't exist:
+```
+server: https://dev.azure.com
+```
+
+When using on-premises server:
+```
+server: https://tfs.company.com
+org: MyOrganization
+project: MyProject
+```
+
+**Sorting**: Keys are displayed in alphabetical order (org, project, server).
+
+**Example Usage**:
+```bash
+# List current configuration
+ado config list
+
+# After setting some values
+ado config set --org MyOrg --project MyProject
+ado config list
+# Output:
+# org: MyOrg
+# project: MyProject
+# server: https://dev.azure.com
+```
+
 ### config set
 
 **Purpose**: Store Azure DevOps configuration values for the CLI.
@@ -139,6 +201,31 @@ When updating configuration:
 4. Preserve any keys not being updated
 
 This allows users to set values incrementally without losing previous settings.
+
+### List Behavior
+
+When listing configuration:
+1. Read existing config using `read_config()` (returns empty dict if file doesn't exist)
+2. Apply default value for `server` if not in config: `https://dev.azure.com`
+3. Sort keys alphabetically
+4. Output each key-value pair as `key: value`
+
+**Implementation approach**:
+```python
+@config_app.command("list")
+def config_list() -> None:
+    """List all configuration values."""
+    config_path = get_config_path()
+    config = read_config(config_path)
+
+    # Apply default for server
+    if "server" not in config:
+        config["server"] = "https://dev.azure.com"
+
+    # Sort and display
+    for key in sorted(config.keys()):
+        typer.echo(f"{key}: {config[key]}")
+```
 
 ## Technical Implementation
 

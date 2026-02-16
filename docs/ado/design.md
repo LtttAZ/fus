@@ -9,6 +9,7 @@ The `ado` CLI provides commands for interacting with Azure DevOps. It supports c
 ```bash
 # Configuration commands
 ado config set [--project=<project>] [--org=<organization>] [--server=<server>]
+ado config list
 
 # Repository commands
 ado repo browse [--branch=<branch>]
@@ -27,6 +28,7 @@ Manage ADO CLI configuration settings stored in `~/.fus/ado.yaml`.
 
 **Commands**:
 - `ado config set` - Set configuration values (project, org, server)
+- `ado config list` - List all current configuration values
 
 ### Repository Commands
 Operations for Azure DevOps repositories using git remote information.
@@ -68,6 +70,9 @@ server: https://dev.azure.com
 # Set up configuration
 ado config set --project MyProject --org MyOrg
 ado config set --server https://dev.azure.com
+
+# List current configuration
+ado config list
 
 # Browse repository (current directory must be a git repo)
 ado repo browse

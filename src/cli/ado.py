@@ -54,6 +54,21 @@ def config_set(
     typer.echo(f"Configuration saved: {updates_str}")
 
 
+@config_app.command("list")
+def config_list() -> None:
+    """List all configuration values."""
+    config_path = get_config_path()
+    config = read_config(config_path)
+
+    # Apply default for server
+    if "server" not in config:
+        config["server"] = "https://dev.azure.com"
+
+    # Sort and display
+    for key in sorted(config.keys()):
+        typer.echo(f"{key}: {config[key]}")
+
+
 @repo_app.command("browse")
 def repo_browse(
     branch: Optional[str] = typer.Option(None, "--branch", help="Branch to browse"),
