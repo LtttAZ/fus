@@ -52,11 +52,38 @@ poetry run python <script>
 
 # Install the project in editable mode
 poetry install
+
+# Run tests
+.venv/Scripts/python -m pytest           # All tests
+.venv/Scripts/python -m pytest -v        # Verbose output
+.venv/Scripts/python -m pytest tests/ado/ # ADO tests only
 ```
 
 ## Python Version
 
 The project strictly requires Python 3.13.2 (not >=3.13, but ==3.13.2). This is specified in `pyproject.toml`.
+
+## Current CLIs
+
+### ADO (Azure DevOps) CLI
+
+The `ado` CLI provides commands for interacting with Azure DevOps. Supports both Azure DevOps Services (cloud) and Azure DevOps Server (on-premises).
+
+**Commands:**
+- `ado config set` - Set configuration (project, org, server)
+- `ado repo browse` - Open repository in browser (from git remote)
+- `ado workitem browse` (alias: `ado wi browse`) - Open work item in browser (requires config)
+
+**Configuration:**
+- Stored in `~/.fus/ado.yaml` (Unix) or `%LOCALAPPDATA%\fus\ado.yaml` (Windows)
+- Uses `AdoConfig` class for validated access
+- See [docs/ado/design.md](docs/ado/design.md) for details
+
+**Implementation highlights:**
+- Configuration class pattern with property-based validation
+- Git remote URL parsing for repo commands
+- Support for both cloud and on-premises Azure DevOps
+- Comprehensive test coverage (36 tests)
 
 ## Technology Stack
 
@@ -79,9 +106,45 @@ The project strictly requires Python 3.13.2 (not >=3.13, but ==3.13.2). This is 
 - Common modules provide reusable functions for config management, data operations, etc.
 - See [docs/cli_design.md](docs/cli_design.md) for detailed patterns
 
-Example config pattern:
+**Configuration Pattern - Validation Classes:**
+
+For CLIs that need validated configuration values, use a configuration class to centralize validation and error handling:
+
 ```python
-# src/common/<cli>_config.py - Business logic
+# src/common/<cli>_config.py - Configuration class with validation
+class AdoConfig:
+    """ADO configuration with validation and error handling."""
+
+    def __init__(self):
+        """Load configuration from file."""
+        self.config_path = get_config_path()
+        self._data = read_config(self.config_path)
+
+    @property
+    def server(self) -> str:
+        """Get server URL with default."""
+        return self._data.get("server", "https://dev.azure.com")
+
+    @property
+    def org(self) -> str:
+        """Get organization name, exits with error if not configured."""
+        value = self._data.get("org")
+        if not value:
+            typer.echo("Error: Organization not configured. Use 'ado config set --org <org>' to set it.")
+            raise typer.Exit(code=1)
+        return value
+```
+
+**Benefits:**
+- Centralizes all validation logic and error messages in one place
+- Makes CLI code concise (reduced from ~25 lines to 4 lines)
+- Automatic validation when properties are accessed
+- Consistent error handling across all commands
+
+**Basic Config Pattern (for simple configs):**
+
+```python
+# src/common/<cli>_config.py - Basic functions for simple config management
 from pathlib import Path
 from platformdirs import user_config_dir
 import yaml
@@ -106,23 +169,43 @@ def write_config(config_path: Path, config: dict) -> None:
 This project follows a **document-first, test-driven development** approach:
 
 ### 1. Design Document Phase
-- Co-author design documents for new features/CLIs
-- Document should clearly define requirements, behavior, and interfaces
+- Co-author design documents for new features/CLIs in `docs/<cli_name>/`
+- Documents should clearly define requirements, behavior, and interfaces
+- **Organize design docs by first-level commands** (e.g., `config_design.md`, `repo_design.md`, `workitem_design.md`)
+- Main `design.md` provides overview and links to command-specific docs
 - Get approval before proceeding to tests
 
 ### 2. Test-Driven Development (TDD)
 - Create integration tests based on the approved design document
+- Organize tests by command groups in `tests/<cli_name>/test_<command>_<subcommand>.py`
 - Tests should cover the behavior specified in the design
 - User reviews and approves tests before implementation
 
 ### 3. Implementation
 - Implement features only after tests are approved
 - Code should make the tests pass
+- Keep CLI code concise by delegating to common modules
+- Use configuration classes for validated config access
+
+### 4. Documentation Update **[CRITICAL]**
+- **ALWAYS update design documents after code changes**
+- Update affected design docs to reflect implementation details
+- Document new patterns, classes, or approaches used
+- Keep code examples in docs synchronized with actual code
+- Cross-reference related documents
+
+**Complete workflow example:**
+1. Write feature design document
+2. Write integration tests
+3. Implement feature
+4. **Update design docs to match implementation**
+5. Commit all changes together
 
 ### Testing Guidelines
 - Write integration tests that verify end-to-end CLI behavior
 - Use Typer's `CliRunner` to invoke commands programmatically in tests
 - Tests must be approved before starting implementation
+- Mock external dependencies (file system, network, etc.)
 
 Example test pattern:
 ```python
@@ -132,3 +215,77 @@ result = runner.invoke(app, ["arg1", "arg2"])
 assert result.exit_code == 0
 assert "expected output" in result.stdout
 ```
+
+## Documentation Structure
+
+### Design Document Organization
+
+Design documents are organized by **first-level commands** to make it easy to find all related information:
+
+```
+docs/
+├── README.md                    # Documentation index
+├── cli_design.md                # Common patterns for all CLIs
+└── <cli_name>/
+    ├── README.md                # Navigation guide for this CLI
+    ├── design.md                # Main overview with quick reference
+    ├── <command>_design.md      # Detailed design for each command group
+    └── ...
+```
+
+**Example for ADO CLI:**
+```
+docs/ado/
+├── README.md              # ADO CLI documentation index
+├── design.md              # Overview of all ADO commands
+├── config_design.md       # All 'ado config' commands
+├── repo_design.md         # All 'ado repo' commands
+└── workitem_design.md     # All 'ado workitem' commands
+```
+
+**Benefits:**
+- Easy to find all commands within a command group
+- Clear separation of concerns
+- Easier to maintain and update
+- Better navigation for developers
+
+## Best Practices and Key Patterns
+
+### Configuration Management
+1. **Use configuration classes for validation** - Centralize error handling in properties
+2. **Provide helpful error messages** - Guide users to fix configuration issues
+3. **Use defaults where appropriate** - e.g., `server` defaults to `https://dev.azure.com`
+4. **Preserve existing values** - When updating config, merge with existing data
+
+### CLI Design
+1. **Keep CLI code concise** - Delegate logic to common modules and config classes
+2. **Use meaningful aliases** - e.g., `wi` for `workitem` for frequently used commands
+3. **Validate early** - Check requirements before performing operations
+4. **Provide clear error messages** - Include suggested fixes in error output
+
+### Code Organization
+1. **Segregation of duties** - CLI defines structure, common modules implement logic
+2. **Single responsibility** - Each function/class has one clear purpose
+3. **Reusability** - Common modules can be shared across CLIs
+4. **Testability** - Business logic can be tested independently
+
+### Testing Strategy
+1. **Integration tests first** - Test complete user workflows
+2. **Mock external dependencies** - File system, git, web browser, etc.
+3. **Test error cases** - Missing config, invalid input, edge cases
+4. **Organize by command groups** - e.g., `test_config_set.py`, `test_workitem_browse.py`
+
+### Documentation Discipline
+1. **Update docs with code changes** - Keep documentation synchronized
+2. **Include code examples** - Show actual usage patterns
+3. **Document the 'why'** - Explain benefits and trade-offs
+4. **Cross-reference** - Link related documents together
+
+## Continuous Integration
+
+GitHub Actions workflow (`.github/workflows/test.yml`) runs automatically on all branches:
+- Sets up Python 3.13.2
+- Installs Poetry
+- Caches dependencies for faster runs
+- Runs full test suite with pytest
+- Ensures all tests pass before merging
