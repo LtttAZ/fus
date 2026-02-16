@@ -20,6 +20,7 @@ app.add_typer(repo_app, name="repo")
 def config_set(
     project: Optional[str] = typer.Option(None, "--project", help="Azure DevOps project name"),
     org: Optional[str] = typer.Option(None, "--org", help="Azure DevOps organization name"),
+    server: Optional[str] = typer.Option(None, "--server", help="Azure DevOps server URL"),
 ) -> None:
     """Set configuration values."""
     # Collect provided options
@@ -28,6 +29,8 @@ def config_set(
         updates["project"] = project
     if org is not None:
         updates["org"] = org
+    if server is not None:
+        updates["server"] = server
 
     # Check that at least one option was provided
     if not updates:
