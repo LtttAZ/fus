@@ -46,6 +46,25 @@ Operations for Azure DevOps work items using configuration settings.
 **Commands**:
 - `ado workitem browse` (alias: `ado wi browse`) - Open work item in browser
 
+## API Client
+
+For programmatic interaction with Azure DevOps REST API.
+
+**Detailed design**: [client_design.md](client_design.md)
+
+**Purpose:**
+- Provide Python API for Azure DevOps operations
+- Enable CLI commands to retrieve data from Azure DevOps (beyond URL generation)
+- Support authentication with Personal Access Tokens (PAT)
+
+**Initial scope:**
+- Repository operations: list repositories, get repository details
+
+**Future features:**
+- Work item CRUD operations
+- Pull request management
+- Pipeline operations
+
 ## Configuration File
 
 **Location**: `~/.fus/ado.yaml` (Unix/Linux/macOS) or `%LOCALAPPDATA%\fus\ado.yaml` (Windows)
@@ -63,6 +82,8 @@ server: https://dev.azure.com
 - `project`: Azure DevOps project name (required for work item commands)
 - `org`: Azure DevOps organization name (required for work item commands)
 - `server`: Azure DevOps server URL (defaults to `https://dev.azure.com` if not set)
+
+**Note:** Personal Access Token (PAT) for API operations is configured via the `ADO_PAT` environment variable, not in the config file. See [client_design.md](client_design.md) for details.
 
 ## Quick Examples
 
@@ -90,6 +111,7 @@ See [../cli_design.md](../cli_design.md) for common CLI implementation patterns.
 - CLI entry point: `src/cli/ado.py`
 - Configuration utilities: `src/common/ado_config.py`
 - ADO URL utilities: `src/common/ado_utils.py`
+- ADO REST API client: `src/common/ado_client.py` (see [client_design.md](client_design.md))
 - Git utilities: `src/common/git_utils.py`
 - Integration tests: `tests/ado/`
 

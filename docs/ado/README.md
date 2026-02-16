@@ -16,6 +16,9 @@ The ADO CLI provides commands for interacting with Azure DevOps from the command
 - **[repo_design.md](repo_design.md)** - Repository commands (`ado repo`)
 - **[workitem_design.md](workitem_design.md)** - Work item commands (`ado workitem`, `ado wi`)
 
+### API Client Design
+- **[client_design.md](client_design.md)** - Azure DevOps REST API client for programmatic access
+
 ## Quick Reference
 
 ### Configuration
