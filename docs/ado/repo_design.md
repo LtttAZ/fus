@@ -44,9 +44,12 @@ ado repo browse --branch develop   # Browse specific branch
 
 **Configuration**:
 - `repo.columns`: Comma-separated list of field paths to display (configurable via `ado config set`)
-  - Default: `name,id,remote_url,default_branch`
+  - Default: `id,name`
   - Supports dot notation for nested fields: `project.name`, `project.id`
   - Automatically parses JSON strings in nested field access
+- `repo.column-names`: Comma-separated list of display names for columns (configurable via `ado config set`)
+  - Default: `repo_id,repo_name`
+  - Must match the number of fields in `repo.columns`
 
 **Requirements**:
 - Configuration: `org`, `project` must be set in `~/.fus/ado.yaml`
@@ -65,43 +68,46 @@ ado repo browse --branch develop   # Browse specific branch
 
 **Output Format**:
 
-Display repositories in a formatted table using `rich`. Columns are configurable via `repo.columns` config.
+Display repositories in a formatted table using `rich`. The table always includes an auto-incrementing ID column on the left. Columns and their display names are configurable via `repo.columns` and `repo.column-names` config.
 
-**Default fields** (`name,id,remote_url,default_branch`):
-
-```
-┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
-┃ name         ┃ id                                   ┃ remote_url                                                    ┃ default_branch   ┃
-┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│ my-repo      │ 2f3d611a-f012-4b39-b157-8db63f380226 │ https://dev.azure.com/myorg/myproject/_git/my-repo            │ refs/heads/main  │
-│ another-repo │ 8a4b722c-e023-5c40-c268-9fc74e7f6e3e │ https://dev.azure.com/myorg/myproject/_git/another-repo       │ refs/heads/master│
-└──────────────┴──────────────────────────────────────┴───────────────────────────────────────────────────────────────┴──────────────────┘
-```
-
-**Custom fields** (e.g., `name,web_url,project.name`):
+**Default fields** (`id,name` with display names `repo_id,repo_name`):
 
 ```
-┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
-┃ name         ┃ web_url                                                                   ┃ project.name┃
-┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
-│ my-repo      │ https://dev.azure.com/myorg/myproject/_git/my-repo                        │ MyProject   │
-│ another-repo │ https://dev.azure.com/myorg/myproject/_git/another-repo                   │ MyProject   │
-└──────────────┴───────────────────────────────────────────────────────────────────────────┴─────────────┘
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ #  ┃ repo_id                              ┃ repo_name    ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ 1  │ 2f3d611a-f012-4b39-b157-8db63f380226 │ my-repo      │
+│ 2  │ 8a4b722c-e023-5c40-c268-9fc74e7f6e3e │ another-repo │
+└────┴──────────────────────────────────────┴──────────────┘
 ```
 
-**Configuring fields**:
+**Custom fields and names** (e.g., `name,web_url,project.name` with names `Repository,URL,Project`):
+
+```
+┏━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ #  ┃ Repository   ┃ URL                                                                       ┃ Project   ┃
+┡━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ 1  │ my-repo      │ https://dev.azure.com/myorg/myproject/_git/my-repo                        │ MyProject │
+│ 2  │ another-repo │ https://dev.azure.com/myorg/myproject/_git/another-repo                   │ MyProject │
+└────┴──────────────┴───────────────────────────────────────────────────────────────────────────┴───────────┘
+```
+
+**Configuring fields and display names**:
 ```bash
-# Set custom fields
+# Set custom fields (display names default to field names)
 ado config set repo.columns=name,web_url,project.name
 
+# Set custom display names
+ado config set repo.column-names=Repository,URL,Project
+
+# Set both together
+ado config set repo.columns=name,remote_url,default_branch repo.column-names="Name,Clone URL,Branch"
+
 # Reset to default
-ado config set repo.columns=name,id,remote_url,default_branch
+ado config set repo.columns=id,name repo.column-names=repo_id,repo_name
 
-# Minimal view
-ado config set repo.columns=name,remote_url
-
-# Access nested fields
-ado config set repo.columns=name,project.id,project.name
+# Minimal view with defaults
+ado config set repo.columns=id,name
 ```
 
 **Field Access**:
@@ -118,6 +124,17 @@ Fields support dot notation for nested access:
 - `project.id` - Project GUID (nested field)
 
 Any field from the GitRepository object can be accessed. If a nested value is a JSON string instead of an object, it will be automatically parsed before continuing field access.
+
+**Display Names**:
+
+Column headers can be customized using `repo.column-names`:
+- Must be comma-separated values matching the number of fields in `repo.columns`
+- If not configured, defaults to `repo_id,repo_name`
+- If configured but count doesn't match, uses field names as fallback
+
+**Row ID Column**:
+
+The table always includes an auto-incrementing ID column (`#`) as the first column showing row numbers (1, 2, 3, etc.).
 
 **Empty Project Output**:
 ```
@@ -173,6 +190,14 @@ ado repo list
   ```
 - Exit Code: 1
 
+**Column Names Mismatch** (warning, not error):
+- Message:
+  ```
+  Warning: Number of column names (3) doesn't match number of columns (2). Using field names as headers.
+  ```
+- Behavior: Falls back to using field names as column headers
+- Exit Code: 0 (continues execution)
+
 **Implementation Notes**:
 
 **Dependencies**:
@@ -187,7 +212,8 @@ import json
 from rich.console import Console
 from rich.table import Table
 
-DEFAULT_FIELDS = ["name", "id", "remote_url", "default_branch"]
+DEFAULT_FIELDS = ["id", "name"]
+DEFAULT_COLUMN_NAMES = ["repo_id", "repo_name"]
 
 def get_nested_value(obj, field_path: str):
     """
@@ -244,17 +270,38 @@ def repo_list() -> None:
         else:
             fields = DEFAULT_FIELDS
 
+        # Get column names configuration
+        column_names_config = client.config._data.get("repo", {}).get("column-names")
+        if column_names_config:
+            column_names = [n.strip() for n in column_names_config.split(",")]
+            # Validate count matches
+            if len(column_names) != len(fields):
+                typer.echo(
+                    f"Warning: Number of column names ({len(column_names)}) doesn't match "
+                    f"number of columns ({len(fields)}). Using field names as headers."
+                )
+                column_names = fields
+        else:
+            # Use defaults if fields are default, otherwise use field names
+            if fields == DEFAULT_FIELDS:
+                column_names = DEFAULT_COLUMN_NAMES
+            else:
+                column_names = fields
+
         # Create rich table
         console = Console()
         table = Table(show_header=True, header_style="bold cyan")
 
-        # Add columns with field names as headers
-        for field in fields:
-            table.add_column(field)
+        # Add row ID column first
+        table.add_column("#", style="dim", width=4)
+
+        # Add data columns
+        for column_name in column_names:
+            table.add_column(column_name)
 
         # Add rows
-        for repo in repos:
-            row = []
+        for idx, repo in enumerate(repos, start=1):
+            row = [str(idx)]  # Start with row ID
             for field in fields:
                 try:
                     value = get_nested_value(repo, field)
