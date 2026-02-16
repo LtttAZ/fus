@@ -2,7 +2,9 @@
 
 ## Overview
 
-The `ado` CLI provides commands for interacting with Azure DevOps. It supports configuration management, repository browsing, and work item operations.
+**Cross-Platform CLI**: Runs on Windows (Command Prompt, PowerShell, Git Bash), Linux, and macOS.
+
+The `ado` CLI provides commands for interacting with Azure DevOps. Supports configuration management, repository browsing, and work item operations.
 
 ## Command Structure
 
@@ -23,7 +25,7 @@ ado wi browse --id=<id>          # Alias for workitem
 ## Command Groups
 
 ### Configuration Commands
-Manage ADO CLI configuration settings stored in `~/.fus/ado.yaml`.
+Manage ADO CLI configuration settings.
 
 **Detailed design**: [config_design.md](config_design.md)
 
@@ -69,7 +71,10 @@ For programmatic interaction with Azure DevOps REST API.
 
 ## Configuration File
 
-**Location**: `~/.fus/ado.yaml` (Unix/Linux/macOS) or `%LOCALAPPDATA%\fus\ado.yaml` (Windows)
+**Location** (via `platformdirs.user_config_dir("fus")`):
+- **Windows**: `%LOCALAPPDATA%\fus\ado.yaml`
+- **Linux**: `~/.config/fus/ado.yaml`
+- **macOS**: `~/Library/Application Support/fus/ado.yaml`
 
 **Format**: YAML
 
@@ -98,7 +103,9 @@ ado config set --server https://dev.azure.com
 ado config list
 
 # Set up PAT for API operations (required for repo list)
-export ADO_PAT="your-personal-access-token"
+export ADO_PAT="your-personal-access-token"  # Linux/macOS/Git Bash
+set ADO_PAT=your-personal-access-token       # Windows Command Prompt
+$env:ADO_PAT="your-personal-access-token"    # Windows PowerShell
 
 # Browse repository (current directory must be a git repo)
 ado repo browse

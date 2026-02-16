@@ -6,32 +6,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Python CLI project named "fus" using Poetry for dependency management. The project requires Python 3.13.2 exactly.
 
+**Cross-Platform Support:** All CLI tools are designed to run on:
+- Windows (Command Prompt, PowerShell, Git Bash)
+- Linux (Bash)
+- macOS (Bash/Zsh)
+
 **Multiple CLIs:** This repository contains multiple CLI tools. Each CLI is run directly using Python (not compiled to executables).
 
 **Running CLIs:**
 
-From anywhere (if `scripts/` directory is in system PATH):
-```bash
-<cli_name> [args]
-```
-
-From project directory:
+From project directory (cross-platform):
 ```bash
 poetry run python src/cli/<cli_name>.py [args]
 ```
 
-**Wrapper Scripts:** The `scripts/` directory contains batch files (`.bat`) for each CLI. These scripts activate the venv and call the CLI while preserving the caller's current directory for relative paths.
+From anywhere (if `scripts/` directory is in system PATH):
+- **Windows**: `<cli_name>.bat [args]` (batch file wrapper)
+- **Linux/macOS**: Add `scripts/` to PATH and use `poetry run python` wrapper scripts
+
+**Note:** The `scripts/` directory contains `.bat` files for Windows. These activate the venv and call the CLI while preserving the caller's current directory for relative paths. For Linux/macOS, use `poetry run` directly or create shell script wrappers as needed.
 
 ## Development Setup
 
 The project uses Poetry with a virtual environment located in `.venv/`.
 
 ### Environment Setup
-```bash
-# Activate virtual environment (Windows Git Bash)
-source .venv/Scripts/activate
 
-# Install dependencies
+**Activate virtual environment:**
+
+```bash
+# Windows Command Prompt
+.venv\Scripts\activate.bat
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# Windows Git Bash / Linux / macOS
+source .venv/bin/activate
+```
+
+**Install dependencies:**
+```bash
 poetry install
 ```
 
@@ -52,16 +67,25 @@ poetry update
 # CRITICAL: Always run poetry lock after adding/updating dependencies
 poetry lock
 
-# Run a command in the Poetry environment
+# Run a command in the Poetry environment (cross-platform)
 poetry run python <script>
 
 # Install the project in editable mode
 poetry install
 
-# Run tests
-.venv/Scripts/python -m pytest           # All tests
-.venv/Scripts/python -m pytest -v        # Verbose output
-.venv/Scripts/python -m pytest tests/ado/ # ADO tests only
+# Run tests (cross-platform)
+poetry run pytest              # All tests
+poetry run pytest -v           # Verbose output
+poetry run pytest tests/ado/   # ADO tests only
+```
+
+**Platform-specific test commands** (if needed):
+```bash
+# Windows
+.venv\Scripts\python -m pytest
+
+# Linux/macOS
+.venv/bin/python -m pytest
 ```
 
 **Dependency Management Rules:**
@@ -87,7 +111,8 @@ The `ado` CLI provides commands for interacting with Azure DevOps. Supports both
 - `ado workitem browse` (alias: `ado wi browse`) - Open work item in browser (requires config)
 
 **Configuration:**
-- Stored in `~/.fus/ado.yaml` (Unix) or `%LOCALAPPDATA%\fus\ado.yaml` (Windows)
+- **Windows**: `%LOCALAPPDATA%\fus\ado.yaml` (typically `C:\Users\<username>\AppData\Local\fus\ado.yaml`)
+- **Linux/macOS**: `~/.local/share/fus/ado.yaml` or `~/.config/fus/ado.yaml` (depends on platformdirs)
 - Uses `AdoConfig` class for validated access
 - See [docs/ado/design.md](docs/ado/design.md) for details
 
@@ -107,9 +132,12 @@ The `ado` CLI provides commands for interacting with Azure DevOps. Supports both
 
 **Configuration Management:**
 - **pydantic-settings**: Type-safe config management using Pydantic models
-- **platformdirs**: Cross-platform config directory paths
+- **platformdirs**: Cross-platform config directory paths (automatically selects correct location per OS)
 - **PyYAML**: YAML format for configuration files
-- Config files stored in `~/.fus/<cli>.yaml` (Unix) or `AppData/Local/fus/<cli>.yaml` (Windows) in YAML format
+- Config file locations (via `platformdirs.user_config_dir("fus")`):
+  - **Windows**: `%LOCALAPPDATA%\fus\<cli>.yaml`
+  - **Linux**: `~/.config/fus/<cli>.yaml` or `~/.local/share/fus/<cli>.yaml`
+  - **macOS**: `~/Library/Application Support/fus/<cli>.yaml`
 - Easy to override config directory in tests for isolation
 
 **Code Organization:**

@@ -1,6 +1,11 @@
 # ADO Config Commands
 
-Configuration stored in `~/.fus/ado.yaml` (Unix) or `%LOCALAPPDATA%\fus\ado.yaml` (Windows).
+**Cross-platform**: Runs on Windows (Command Prompt, PowerShell, Git Bash), Linux, macOS.
+
+**Configuration file location** (via `platformdirs.user_config_dir("fus")`):
+- **Windows**: `%LOCALAPPDATA%\fus\ado.yaml`
+- **Linux**: `~/.config/fus/ado.yaml`
+- **macOS**: `~/Library/Application Support/fus/ado.yaml`
 
 ## Commands
 
