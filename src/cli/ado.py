@@ -2,6 +2,7 @@
 
 import typer
 import webbrowser
+import fnmatch
 from typing import Optional
 from pathlib import Path
 from rich.console import Console
@@ -155,7 +156,9 @@ DEFAULT_COLUMN_NAMES = ["repo_id", "repo_name"]
 
 
 @repo_app.command("list")
-def repo_list() -> None:
+def repo_list(
+    pattern: Optional[str] = typer.Option(None, "--pattern", "--patt", help="Filter repositories by name using glob pattern"),
+) -> None:
     """List all repositories in the project."""
     from src.common.ado_client import AdoClient
     from src.common.ado_exceptions import AdoClientError
@@ -163,6 +166,10 @@ def repo_list() -> None:
     try:
         client = AdoClient()
         repos = client.list_repos()
+
+        # Apply pattern filter if provided
+        if pattern:
+            repos = [repo for repo in repos if fnmatch.fnmatch(repo.name, pattern)]
 
         if not repos:
             config = client.config

@@ -15,7 +15,7 @@ ado config list
 
 # Repository commands
 ado repo browse [--branch=<branch>]
-ado repo list
+ado repo list [--pattern=<pattern>]
 
 # Work item commands
 ado workitem browse --id=<id>
@@ -40,7 +40,7 @@ Operations for Azure DevOps repositories.
 
 **Commands**:
 - `ado repo browse` - Open repository in browser (uses git remote URL)
-- `ado repo list` - List all repositories in project (uses API, requires ADO_PAT)
+- `ado repo list` - List all repositories in project with optional pattern filtering (uses API, requires ADO_PAT)
 
 ### Work Item Commands
 Operations for Azure DevOps work items using configuration settings.
@@ -113,6 +113,8 @@ ado repo browse --branch develop
 
 # List repositories in project (requires ADO_PAT)
 ado repo list
+ado repo list --pattern "my-*"         # Filter by pattern
+ado repo list --patt "*-service"       # Using alias
 
 # Browse work item
 ado wi browse --id 12345

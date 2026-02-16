@@ -377,6 +377,149 @@ class TestRepoListErrors:
         assert "Unable to access field" in result.stdout
 
 
+class TestRepoListPattern:
+    """Test pattern filtering."""
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_pattern_match(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test listing repos with pattern that matches some repos."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with pattern
+        result = runner.invoke(app, ["repo", "list", "--pattern", "my-*"])
+
+        # Verify
+        assert result.exit_code == 0
+        assert "my-repo" in result.stdout
+        assert "another-repo" not in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_pattern_alias(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test listing repos with pattern alias --patt."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with pattern alias
+        result = runner.invoke(app, ["repo", "list", "--patt", "*-repo"])
+
+        # Verify
+        assert result.exit_code == 0
+        assert "my-repo" in result.stdout
+        assert "another-repo" in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_pattern_no_match(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test listing repos with pattern that matches no repos."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with pattern that matches nothing
+        result = runner.invoke(app, ["repo", "list", "--pattern", "nonexistent-*"])
+
+        # Verify
+        assert result.exit_code == 0
+        assert "No repositories found" in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_pattern_wildcard(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test listing repos with wildcard pattern."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with wildcard pattern
+        result = runner.invoke(app, ["repo", "list", "--pattern", "*"])
+
+        # Verify - should match all repos
+        assert result.exit_code == 0
+        assert "my-repo" in result.stdout
+        assert "another-repo" in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_pattern_question_mark(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test listing repos with ? wildcard pattern."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with ? pattern (matches single character)
+        result = runner.invoke(app, ["repo", "list", "--pattern", "my-????"])
+
+        # Verify
+        assert result.exit_code == 0
+        assert "my-repo" in result.stdout
+        assert "another-repo" not in result.stdout
+
+
 class TestRepoListGetNestedValue:
     """Test get_nested_value helper function."""
 
