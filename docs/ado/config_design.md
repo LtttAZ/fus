@@ -78,15 +78,17 @@ ado config list
 - `--project` (optional): The Azure DevOps project name
 - `--org` (optional): The Azure DevOps organization name
 - `--server` (optional): The Azure DevOps server URL (defaults to `https://dev.azure.com` if not set)
+- `key=value` format (optional): Set nested configuration using dot notation (e.g., `repo.columns=name,url`)
 
 **Behavior**:
-1. Accepts one or more configuration options
+1. Accepts one or more configuration options (flags or key=value pairs)
 2. At least one option must be provided
 3. Stores the provided values in a configuration file at `~/.fus/ado.yaml`
 4. Creates the `~/.fus/` directory if it doesn't exist
 5. If `ado.yaml` exists, updates only the specified values (preserves other existing values)
 6. If `ado.yaml` doesn't exist, creates it with the provided values
-7. Displays success message listing the saved values, e.g., "Configuration saved: project=MyProject, org=MyOrg"
+7. For nested keys (with dots), creates nested YAML structure
+8. Displays success message listing the saved values, e.g., "Configuration saved: project=MyProject, org=MyOrg"
 
 **Exit Codes**:
 - `0`: Success
@@ -98,10 +100,18 @@ ado config list
 
 **Example Usage**:
 ```bash
+# Set top-level config with flags
 ado config set --project MyProject --org MyOrg
 ado config set --server https://dev.azure.com
 ado config set --project NewProject  # Updates only project, preserves org
 ado config set --server https://tfs.company.com  # On-premises server
+
+# Set nested config with key=value
+ado config set repo.columns=name,url,default_branch
+ado config set repo.columns=name,web_url  # Custom columns for repo list
+
+# Mix flags and key=value
+ado config set --org MyOrg repo.columns=name,id,url
 ```
 
 ## Configuration File
@@ -115,12 +125,15 @@ ado config set --server https://tfs.company.com  # On-premises server
 project: MyProject
 org: MyOrganization
 server: https://dev.azure.com
+repo:
+  columns: name,url,default_branch
 ```
 
 **Configuration Keys**:
 - `project`: Azure DevOps project name (used by workitem commands)
 - `org`: Azure DevOps organization name (used by workitem commands)
 - `server`: Azure DevOps server URL (defaults to `https://dev.azure.com` if not set, used by workitem commands)
+- `repo.columns`: Comma-separated list of columns for `ado repo list` (defaults to `name,id,url,default_branch`)
 
 ## Implementation Notes
 
@@ -225,6 +238,106 @@ def config_list() -> None:
     # Sort and display
     for key in sorted(config.keys()):
         typer.echo(f"{key}: {config[key]}")
+```
+
+### Nested Configuration (Dot Notation)
+
+**Purpose**: Support nested configuration keys using dot notation (e.g., `repo.columns`)
+
+**Behavior**:
+1. Parse `key=value` arguments where key contains dots
+2. Convert dot notation to nested dictionary structure
+3. Merge nested structure into existing config
+
+**Implementation approach**:
+```python
+def set_nested_value(config: dict, key: str, value: str) -> None:
+    """Set a nested value using dot notation."""
+    parts = key.split(".")
+    current = config
+
+    # Navigate/create nested structure
+    for part in parts[:-1]:
+        if part not in current:
+            current[part] = {}
+        elif not isinstance(current[part], dict):
+            # Overwrite non-dict value with dict
+            current[part] = {}
+        current = current[part]
+
+    # Set the final value
+    current[parts[-1]] = value
+
+@config_app.command("set")
+def config_set(
+    project: Optional[str] = typer.Option(None, "--project", help="Azure DevOps project name"),
+    org: Optional[str] = typer.Option(None, "--org", help="Azure DevOps organization name"),
+    server: Optional[str] = typer.Option(None, "--server", help="Azure DevOps server URL"),
+    args: Optional[list[str]] = typer.Argument(None, help="Additional config in key=value format")
+) -> None:
+    """Set configuration values."""
+    # Collect provided options
+    updates = {}
+    if project is not None:
+        updates["project"] = project
+    if org is not None:
+        updates["org"] = org
+    if server is not None:
+        updates["server"] = server
+
+    # Read existing config
+    config_path = get_config_path()
+    existing_config = read_config(config_path)
+
+    # Process top-level updates
+    existing_config.update(updates)
+
+    # Process key=value arguments
+    if args:
+        for arg in args:
+            if "=" not in arg:
+                typer.echo(f"Error: Invalid argument format: {arg}. Expected key=value")
+                raise typer.Exit(code=1)
+
+            key, value = arg.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+
+            if "." in key:
+                # Nested key
+                set_nested_value(existing_config, key, value)
+                updates[key] = value
+            else:
+                # Top-level key
+                existing_config[key] = value
+                updates[key] = value
+
+    # Check that at least one option was provided
+    if not updates:
+        typer.echo("At least one configuration option must be provided")
+        raise typer.Exit(code=1)
+
+    # Write updated config
+    write_config(config_path, existing_config)
+
+    # Display success message
+    updates_str = ", ".join(f"{key}={value}" for key, value in updates.items())
+    typer.echo(f"Configuration saved: {updates_str}")
+```
+
+**Examples**:
+```bash
+# Set nested config
+ado config set repo.columns=name,url
+# Results in: repo: {columns: "name,url"}
+
+# Set multiple levels
+ado config set repo.display.compact=true
+# Results in: repo: {display: {compact: true}}
+
+# Mix flags and nested config
+ado config set --org MyOrg repo.columns=name,web_url
+# Results in: {org: "MyOrg", repo: {columns: "name,web_url"}}
 ```
 
 ## Technical Implementation

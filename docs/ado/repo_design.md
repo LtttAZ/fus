@@ -42,6 +42,11 @@ ado repo browse --branch develop   # Browse specific branch
 
 **Options**: None
 
+**Configuration**:
+- `repo.columns`: Comma-separated list of columns to display (configurable via `ado config set`)
+  - Default: `name,id,url,default_branch`
+  - Available columns: `name`, `id`, `url`, `ssh_url`, `web_url`, `default_branch`, `size`
+
 **Requirements**:
 - Configuration: `org`, `project` must be set in `~/.fus/ado.yaml`
 - Environment: `ADO_PAT` environment variable must be set
@@ -59,7 +64,9 @@ ado repo browse --branch develop   # Browse specific branch
 
 **Output Format**:
 
-Display repositories in a formatted table using `rich`:
+Display repositories in a formatted table using `rich`. Columns are configurable via `repo.columns` config.
+
+**Default columns** (`name,id,url,default_branch`):
 
 ```
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
@@ -70,18 +77,52 @@ Display repositories in a formatted table using `rich`:
 └──────────────┴──────────────────────────────────────┴───────────────────────────────────────────────────────────────┴──────────────────┘
 ```
 
-**Alternative:** With `--simple` flag (optional future enhancement), use simple text output:
-```
-my-repo
-  ID: 2f3d611a-f012-4b39-b157-8db63f380226
-  URL: https://dev.azure.com/myorg/myproject/_git/my-repo
-  Default Branch: refs/heads/main
+**Custom columns** (e.g., `name,web_url`):
 
-another-repo
-  ID: 8a4b722c-e023-5c40-c268-9fc74e7f6e3e
-  URL: https://dev.azure.com/myorg/myproject/_git/another-repo
-  Default Branch: refs/heads/master
 ```
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Name         ┃ Web URL                                                                   ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ my-repo      │ https://dev.azure.com/myorg/myproject/_git/my-repo                        │
+│ another-repo │ https://dev.azure.com/myorg/myproject/_git/another-repo                   │
+└──────────────┴───────────────────────────────────────────────────────────────────────────┘
+```
+
+**Configuring columns**:
+```bash
+# Set custom columns
+ado config set repo.columns=name,web_url,default_branch
+
+# Reset to default
+ado config set repo.columns=name,id,url,default_branch
+
+# Minimal view
+ado config set repo.columns=name,url
+```
+
+**Available Columns**:
+
+| Column          | Description                    | Example Value                                              |
+|-----------------|--------------------------------|------------------------------------------------------------|
+| `name`          | Repository name                | `my-repo`                                                  |
+| `id`            | Repository GUID                | `2f3d611a-f012-4b39-b157-8db63f380226`                     |
+| `url`           | Git clone URL (HTTPS)          | `https://dev.azure.com/myorg/proj/_git/my-repo`            |
+| `ssh_url`       | Git clone URL (SSH)            | `git@ssh.dev.azure.com:v3/myorg/proj/my-repo`             |
+| `web_url`       | Browser URL                    | `https://dev.azure.com/myorg/proj/_git/my-repo`            |
+| `default_branch`| Default branch reference       | `refs/heads/main`                                          |
+| `size`          | Repository size in bytes       | `524288`                                                   |
+
+**Column Display Names and Styles**:
+
+| Column          | Display Name    | Style (Rich) |
+|-----------------|-----------------|--------------|
+| `name`          | Name            | green        |
+| `id`            | ID              | dim          |
+| `url`           | URL             | blue         |
+| `ssh_url`       | SSH URL         | blue         |
+| `web_url`       | Web URL         | blue         |
+| `default_branch`| Default Branch  | yellow       |
+| `size`          | Size            | cyan         |
 
 **Empty Project Output**:
 ```
@@ -130,6 +171,14 @@ ado repo list
 - Message: `Error: Azure DevOps API error: {error_message}`
 - Exit Code: 1
 
+**Invalid Columns**:
+- Message:
+  ```
+  Error: Invalid columns: invalid_col1, invalid_col2
+  Available columns: name, id, url, ssh_url, web_url, default_branch, size
+  ```
+- Exit Code: 1
+
 **Implementation Notes**:
 
 **Dependencies**:
@@ -142,6 +191,19 @@ ado repo list
 ```python
 from rich.console import Console
 from rich.table import Table
+
+# Column definitions
+COLUMN_DEFINITIONS = {
+    "name": {"display": "Name", "style": "green", "attr": "name"},
+    "id": {"display": "ID", "style": "dim", "attr": "id"},
+    "url": {"display": "URL", "style": "blue", "attr": "remote_url"},
+    "ssh_url": {"display": "SSH URL", "style": "blue", "attr": "ssh_url"},
+    "web_url": {"display": "Web URL", "style": "blue", "attr": "web_url"},
+    "default_branch": {"display": "Default Branch", "style": "yellow", "attr": "default_branch"},
+    "size": {"display": "Size", "style": "cyan", "attr": "size"},
+}
+
+DEFAULT_COLUMNS = ["name", "id", "url", "default_branch"]
 
 @repo_app.command("list")
 def repo_list() -> None:
@@ -158,21 +220,37 @@ def repo_list() -> None:
             typer.echo(f"No repositories found in project '{config.project}'")
             return
 
+        # Get columns configuration
+        columns_config = client.config._data.get("repo", {}).get("columns")
+        if columns_config:
+            columns = [c.strip() for c in columns_config.split(",")]
+        else:
+            columns = DEFAULT_COLUMNS
+
+        # Validate columns
+        invalid_columns = [c for c in columns if c not in COLUMN_DEFINITIONS]
+        if invalid_columns:
+            typer.echo(f"Error: Invalid columns: {', '.join(invalid_columns)}")
+            typer.echo(f"Available columns: {', '.join(COLUMN_DEFINITIONS.keys())}")
+            raise typer.Exit(code=1)
+
         # Create rich table
         console = Console()
         table = Table(show_header=True, header_style="bold cyan")
-        table.add_column("Name", style="green")
-        table.add_column("ID", style="dim")
-        table.add_column("URL", style="blue")
-        table.add_column("Default Branch", style="yellow")
 
+        # Add columns dynamically
+        for col in columns:
+            col_def = COLUMN_DEFINITIONS[col]
+            table.add_column(col_def["display"], style=col_def["style"])
+
+        # Add rows
         for repo in repos:
-            table.add_row(
-                repo.name,
-                repo.id,
-                repo.remote_url,
-                repo.default_branch or "N/A"
-            )
+            row = []
+            for col in columns:
+                col_def = COLUMN_DEFINITIONS[col]
+                value = getattr(repo, col_def["attr"], None)
+                row.append(str(value) if value is not None else "N/A")
+            table.add_row(*row)
 
         console.print(table)
 
