@@ -520,6 +520,210 @@ class TestRepoListPattern:
         assert "another-repo" not in result.stdout
 
 
+class TestRepoListOpen:
+    """Test --open flag functionality."""
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    @patch("webbrowser.open")
+    def test_list_repos_with_open_valid_index(self, mock_browser, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test opening a repo with valid index."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with --open and provide index "1" as input
+        result = runner.invoke(app, ["repo", "list", "--open"], input="1\n")
+
+        # Verify
+        assert result.exit_code == 0
+        assert "Enter repository number to open" in result.stdout
+        assert "Opening:" in result.stdout
+        assert "https://dev.azure.com/TestOrg/TestProject/_git/my-repo" in result.stdout
+        mock_browser.assert_called_once_with("https://dev.azure.com/TestOrg/TestProject/_git/my-repo")
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    @patch("webbrowser.open")
+    def test_list_repos_with_open_second_repo(self, mock_browser, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test opening second repo."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with --open and provide index "2" as input
+        result = runner.invoke(app, ["repo", "list", "--open"], input="2\n")
+
+        # Verify
+        assert result.exit_code == 0
+        assert "https://dev.azure.com/TestOrg/TestProject/_git/another-repo" in result.stdout
+        mock_browser.assert_called_once_with("https://dev.azure.com/TestOrg/TestProject/_git/another-repo")
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_open_invalid_number(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test error when invalid number is entered."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with --open and provide invalid input
+        result = runner.invoke(app, ["repo", "list", "--open"], input="abc\n")
+
+        # Verify
+        assert result.exit_code == 1
+        assert "Error: Invalid number" in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_open_out_of_range(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test error when index is out of range."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with --open and provide out of range index
+        result = runner.invoke(app, ["repo", "list", "--open"], input="99\n")
+
+        # Verify
+        assert result.exit_code == 1
+        assert "Error: Repository number must be between 1 and 2" in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_open_zero_index(self, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test error when index is zero."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with --open and provide zero
+        result = runner.invoke(app, ["repo", "list", "--open"], input="0\n")
+
+        # Verify
+        assert result.exit_code == 1
+        assert "Error: Repository number must be between 1 and 2" in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    def test_list_repos_with_open_empty_list(self, mock_read_config, mock_connection, runner):
+        """Test that --open with empty repo list doesn't prompt."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks - empty list
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = []
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with --open
+        result = runner.invoke(app, ["repo", "list", "--open"])
+
+        # Verify - should not prompt for input
+        assert result.exit_code == 0
+        assert "No repositories found" in result.stdout
+        assert "Enter repository number" not in result.stdout
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    @patch("webbrowser.open")
+    def test_list_repos_with_pattern_and_open(self, mock_browser, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test --open works with --pattern filter."""
+        from src.cli.ado import app
+
+        # Setup config
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject"
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run command with --pattern and --open
+        result = runner.invoke(app, ["repo", "list", "--pattern", "my-*", "--open"], input="1\n")
+
+        # Verify - only my-repo should be in the filtered list
+        assert result.exit_code == 0
+        assert "my-repo" in result.stdout
+        assert "another-repo" not in result.stdout
+        assert "https://dev.azure.com/TestOrg/TestProject/_git/my-repo" in result.stdout
+        mock_browser.assert_called_once()
+
+
 class TestRepoListGetNestedValue:
     """Test get_nested_value helper function."""
 

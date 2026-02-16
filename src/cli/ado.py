@@ -158,6 +158,7 @@ DEFAULT_COLUMN_NAMES = ["repo_id", "repo_name"]
 @repo_app.command("list")
 def repo_list(
     pattern: Optional[str] = typer.Option(None, "--pattern", "--patt", help="Filter repositories by name using glob pattern"),
+    open_repo: bool = typer.Option(False, "--open", help="Prompt to open a repository in browser after listing"),
 ) -> None:
     """List all repositories in the project."""
     from src.common.ado_client import AdoClient
@@ -225,6 +226,29 @@ def repo_list(
             table.add_row(*row)
 
         console.print(table)
+
+        # Handle --open flag
+        if open_repo:
+            typer.echo("\nEnter repository number to open (or press Ctrl+C to cancel): ", nl=False)
+            repo_num_str = input()
+
+            # Validate input is a number
+            try:
+                repo_num = int(repo_num_str)
+            except ValueError:
+                typer.echo("Error: Invalid number")
+                raise typer.Exit(code=1)
+
+            # Validate range
+            if repo_num < 1 or repo_num > len(repos):
+                typer.echo(f"Error: Repository number must be between 1 and {len(repos)}")
+                raise typer.Exit(code=1)
+
+            # Get selected repo and open in browser
+            selected_repo = repos[repo_num - 1]
+            url = selected_repo.web_url
+            typer.echo(f"Opening: {url}")
+            webbrowser.open(url)
 
     except AdoClientError as e:
         typer.echo(f"Error: {e}")
