@@ -205,14 +205,14 @@ def repo_list() -> None:
             return
 
         # Get fields configuration
-        fields_config = client.config._data.get("repo", {}).get("columns")
+        fields_config = client.config.repo.columns
         if fields_config:
             fields = [f.strip() for f in fields_config.split(",")]
         else:
             fields = DEFAULT_FIELDS
 
         # Get column names configuration
-        column_names_config = client.config._data.get("repo", {}).get("column-names")
+        column_names_config = client.config.repo.column_names
         if column_names_config:
             column_names = [n.strip() for n in column_names_config.split(",")]
             # Validate count matches

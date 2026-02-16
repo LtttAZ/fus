@@ -32,6 +32,29 @@ def write_config(config_path: Path, config: dict) -> None:
         yaml.dump(config, f)
 
 
+class RepoConfig:
+    """Repository-specific configuration."""
+
+    def __init__(self, repo_data: dict):
+        """
+        Initialize repo config.
+
+        Args:
+            repo_data: Dictionary containing repo-specific config
+        """
+        self._data = repo_data
+
+    @property
+    def columns(self) -> str | None:
+        """Get configured columns for repo list, or None if not set."""
+        return self._data.get("columns")
+
+    @property
+    def column_names(self) -> str | None:
+        """Get configured column names for repo list, or None if not set."""
+        return self._data.get("column-names")
+
+
 class AdoConfig:
     """ADO configuration with validation and error handling."""
 
@@ -39,6 +62,7 @@ class AdoConfig:
         """Load configuration from file."""
         self.config_path = get_config_path()
         self._data = read_config(self.config_path)
+        self._repo_config = None
 
     @property
     def server(self) -> str:
@@ -72,3 +96,11 @@ class AdoConfig:
             typer.echo("Set it with: export ADO_PAT='your-personal-access-token'")
             raise typer.Exit(code=1)
         return value
+
+    @property
+    def repo(self) -> RepoConfig:
+        """Get repository-specific configuration."""
+        if self._repo_config is None:
+            repo_data = self._data.get("repo", {})
+            self._repo_config = RepoConfig(repo_data)
+        return self._repo_config
