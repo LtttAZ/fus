@@ -43,9 +43,10 @@ ado repo browse --branch develop   # Browse specific branch
 **Options**: None
 
 **Configuration**:
-- `repo.columns`: Comma-separated list of columns to display (configurable via `ado config set`)
-  - Default: `name,id,url,default_branch`
-  - Available columns: `name`, `id`, `url`, `ssh_url`, `web_url`, `default_branch`, `size`
+- `repo.columns`: Comma-separated list of field paths to display (configurable via `ado config set`)
+  - Default: `name,id,remote_url,default_branch`
+  - Supports dot notation for nested fields: `project.name`, `project.id`
+  - Automatically parses JSON strings in nested field access
 
 **Requirements**:
 - Configuration: `org`, `project` must be set in `~/.fus/ado.yaml`
@@ -66,63 +67,57 @@ ado repo browse --branch develop   # Browse specific branch
 
 Display repositories in a formatted table using `rich`. Columns are configurable via `repo.columns` config.
 
-**Default columns** (`name,id,url,default_branch`):
+**Default fields** (`name,id,remote_url,default_branch`):
 
 ```
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
-┃ Name         ┃ ID                                   ┃ URL                                                           ┃ Default Branch   ┃
+┃ name         ┃ id                                   ┃ remote_url                                                    ┃ default_branch   ┃
 ┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
 │ my-repo      │ 2f3d611a-f012-4b39-b157-8db63f380226 │ https://dev.azure.com/myorg/myproject/_git/my-repo            │ refs/heads/main  │
 │ another-repo │ 8a4b722c-e023-5c40-c268-9fc74e7f6e3e │ https://dev.azure.com/myorg/myproject/_git/another-repo       │ refs/heads/master│
 └──────────────┴──────────────────────────────────────┴───────────────────────────────────────────────────────────────┴──────────────────┘
 ```
 
-**Custom columns** (e.g., `name,web_url`):
+**Custom fields** (e.g., `name,web_url,project.name`):
 
 ```
-┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Name         ┃ Web URL                                                                   ┃
-┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ my-repo      │ https://dev.azure.com/myorg/myproject/_git/my-repo                        │
-│ another-repo │ https://dev.azure.com/myorg/myproject/_git/another-repo                   │
-└──────────────┴───────────────────────────────────────────────────────────────────────────┘
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ name         ┃ web_url                                                                   ┃ project.name┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+│ my-repo      │ https://dev.azure.com/myorg/myproject/_git/my-repo                        │ MyProject   │
+│ another-repo │ https://dev.azure.com/myorg/myproject/_git/another-repo                   │ MyProject   │
+└──────────────┴───────────────────────────────────────────────────────────────────────────┴─────────────┘
 ```
 
-**Configuring columns**:
+**Configuring fields**:
 ```bash
-# Set custom columns
-ado config set repo.columns=name,web_url,default_branch
+# Set custom fields
+ado config set repo.columns=name,web_url,project.name
 
 # Reset to default
-ado config set repo.columns=name,id,url,default_branch
+ado config set repo.columns=name,id,remote_url,default_branch
 
 # Minimal view
-ado config set repo.columns=name,url
+ado config set repo.columns=name,remote_url
+
+# Access nested fields
+ado config set repo.columns=name,project.id,project.name
 ```
 
-**Available Columns**:
+**Field Access**:
 
-| Column          | Description                    | Example Value                                              |
-|-----------------|--------------------------------|------------------------------------------------------------|
-| `name`          | Repository name                | `my-repo`                                                  |
-| `id`            | Repository GUID                | `2f3d611a-f012-4b39-b157-8db63f380226`                     |
-| `url`           | Git clone URL (HTTPS)          | `https://dev.azure.com/myorg/proj/_git/my-repo`            |
-| `ssh_url`       | Git clone URL (SSH)            | `git@ssh.dev.azure.com:v3/myorg/proj/my-repo`             |
-| `web_url`       | Browser URL                    | `https://dev.azure.com/myorg/proj/_git/my-repo`            |
-| `default_branch`| Default branch reference       | `refs/heads/main`                                          |
-| `size`          | Repository size in bytes       | `524288`                                                   |
+Fields support dot notation for nested access:
+- `name` - Repository name
+- `id` - Repository GUID
+- `remote_url` - Git clone URL (HTTPS)
+- `ssh_url` - Git clone URL (SSH)
+- `web_url` - Browser URL
+- `default_branch` - Default branch reference
+- `size` - Repository size in bytes
+- `project.name` - Project name (nested field)
+- `project.id` - Project GUID (nested field)
 
-**Column Display Names and Styles**:
-
-| Column          | Display Name    | Style (Rich) |
-|-----------------|-----------------|--------------|
-| `name`          | Name            | green        |
-| `id`            | ID              | dim          |
-| `url`           | URL             | blue         |
-| `ssh_url`       | SSH URL         | blue         |
-| `web_url`       | Web URL         | blue         |
-| `default_branch`| Default Branch  | yellow       |
-| `size`          | Size            | cyan         |
+Any field from the GitRepository object can be accessed. If a nested value is a JSON string instead of an object, it will be automatically parsed before continuing field access.
 
 **Empty Project Output**:
 ```
@@ -171,11 +166,10 @@ ado repo list
 - Message: `Error: Azure DevOps API error: {error_message}`
 - Exit Code: 1
 
-**Invalid Columns**:
+**Field Access Error**:
 - Message:
   ```
-  Error: Invalid columns: invalid_col1, invalid_col2
-  Available columns: name, id, url, ssh_url, web_url, default_branch, size
+  Error: Unable to access field 'invalid.field.path' on repository object
   ```
 - Exit Code: 1
 
@@ -189,21 +183,44 @@ ado repo list
 
 **Implementation Pattern**:
 ```python
+import json
 from rich.console import Console
 from rich.table import Table
 
-# Column definitions
-COLUMN_DEFINITIONS = {
-    "name": {"display": "Name", "style": "green", "attr": "name"},
-    "id": {"display": "ID", "style": "dim", "attr": "id"},
-    "url": {"display": "URL", "style": "blue", "attr": "remote_url"},
-    "ssh_url": {"display": "SSH URL", "style": "blue", "attr": "ssh_url"},
-    "web_url": {"display": "Web URL", "style": "blue", "attr": "web_url"},
-    "default_branch": {"display": "Default Branch", "style": "yellow", "attr": "default_branch"},
-    "size": {"display": "Size", "style": "cyan", "attr": "size"},
-}
+DEFAULT_FIELDS = ["name", "id", "remote_url", "default_branch"]
 
-DEFAULT_COLUMNS = ["name", "id", "url", "default_branch"]
+def get_nested_value(obj, field_path: str):
+    """
+    Get nested value from object using dot notation.
+
+    If a nested value is a JSON string, parse it before continuing.
+
+    Args:
+        obj: Object to access
+        field_path: Dot-separated path (e.g., "project.name")
+
+    Returns:
+        The value at the field path
+
+    Raises:
+        AttributeError: If field path is invalid
+    """
+    parts = field_path.split(".")
+    current = obj
+
+    for part in parts:
+        # Get the attribute
+        current = getattr(current, part)
+
+        # If it's a string and we have more parts to traverse, try parsing as JSON
+        if isinstance(current, str) and parts.index(part) < len(parts) - 1:
+            try:
+                current = json.loads(current)
+            except (json.JSONDecodeError, TypeError):
+                # Not valid JSON or not a string, continue with the object as-is
+                pass
+
+    return current
 
 @repo_app.command("list")
 def repo_list() -> None:
@@ -220,36 +237,31 @@ def repo_list() -> None:
             typer.echo(f"No repositories found in project '{config.project}'")
             return
 
-        # Get columns configuration
-        columns_config = client.config._data.get("repo", {}).get("columns")
-        if columns_config:
-            columns = [c.strip() for c in columns_config.split(",")]
+        # Get fields configuration
+        fields_config = client.config._data.get("repo", {}).get("columns")
+        if fields_config:
+            fields = [f.strip() for f in fields_config.split(",")]
         else:
-            columns = DEFAULT_COLUMNS
-
-        # Validate columns
-        invalid_columns = [c for c in columns if c not in COLUMN_DEFINITIONS]
-        if invalid_columns:
-            typer.echo(f"Error: Invalid columns: {', '.join(invalid_columns)}")
-            typer.echo(f"Available columns: {', '.join(COLUMN_DEFINITIONS.keys())}")
-            raise typer.Exit(code=1)
+            fields = DEFAULT_FIELDS
 
         # Create rich table
         console = Console()
         table = Table(show_header=True, header_style="bold cyan")
 
-        # Add columns dynamically
-        for col in columns:
-            col_def = COLUMN_DEFINITIONS[col]
-            table.add_column(col_def["display"], style=col_def["style"])
+        # Add columns with field names as headers
+        for field in fields:
+            table.add_column(field)
 
         # Add rows
         for repo in repos:
             row = []
-            for col in columns:
-                col_def = COLUMN_DEFINITIONS[col]
-                value = getattr(repo, col_def["attr"], None)
-                row.append(str(value) if value is not None else "N/A")
+            for field in fields:
+                try:
+                    value = get_nested_value(repo, field)
+                    row.append(str(value) if value is not None else "N/A")
+                except (AttributeError, KeyError, IndexError) as e:
+                    typer.echo(f"Error: Unable to access field '{field}' on repository object")
+                    raise typer.Exit(code=1)
             table.add_row(*row)
 
         console.print(table)
@@ -265,50 +277,35 @@ def repo_list() -> None:
 - `remote_url`: Git clone URL (HTTPS)
 - `default_branch`: Default branch reference (e.g., "refs/heads/main")
 
-**Additional Properties Available** (for future enhancements):
+**Additional Properties Available**:
 - `ssh_url`: Git clone URL (SSH)
 - `web_url`: Browser URL
-- `project.name`: Project name
-- `project.id`: Project GUID
+- `project.name`: Project name (nested field)
+- `project.id`: Project GUID (nested field)
 - `size`: Repository size in bytes
+- Any other field from the GitRepository object
 
-**Pretty Printing with Rich**:
+**Nested Field Access**:
 
-The command uses the `rich` library for formatted table output:
-- **Table with borders**: Clean, professional table formatting
-- **Colors**: Syntax highlighting for better readability
-  - Name: Green
-  - ID: Dim (gray)
-  - URL: Blue
-  - Default Branch: Yellow
-- **Header styling**: Bold cyan headers
-- **Responsive**: Adjusts to terminal width
+The `get_nested_value()` helper function supports:
+1. Dot notation for nested fields: `project.name`, `project.id`
+2. Automatic JSON parsing: If a nested value is a JSON string, it's parsed before continuing
+3. Safe error handling: Returns error if field path is invalid
 
-**Rich Features Used**:
+**Example nested access**:
 ```python
-from rich.console import Console
-from rich.table import Table
+# Direct attribute
+value = get_nested_value(repo, "name")  # returns repo.name
 
-console = Console()
-table = Table(show_header=True, header_style="bold cyan")
-table.add_column("Name", style="green")
-table.add_column("ID", style="dim")
-table.add_column("URL", style="blue")
-table.add_column("Default Branch", style="yellow")
-console.print(table)
+# Nested attribute
+value = get_nested_value(repo, "project.name")  # returns repo.project.name
+
+# With JSON parsing (if project is a JSON string)
+# 1. Gets repo.project (a string)
+# 2. Parses it as JSON
+# 3. Accesses .name on the parsed object
+value = get_nested_value(repo, "project.name")
 ```
-
-**Dependency**:
-Add to `pyproject.toml`:
-```toml
-[project]
-dependencies = [
-    # ... existing dependencies ...
-    "rich (>=13.0.0,<14.0.0)"
-]
-```
-
-
 
 The command constructs an Azure DevOps repository URL using:
 

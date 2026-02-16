@@ -107,11 +107,11 @@ ado config set --project NewProject  # Updates only project, preserves org
 ado config set --server https://tfs.company.com  # On-premises server
 
 # Set nested config with key=value
-ado config set repo.columns=name,url,default_branch
-ado config set repo.columns=name,web_url  # Custom columns for repo list
+ado config set repo.columns=name,remote_url,default_branch
+ado config set repo.columns=name,web_url  # Custom fields for repo list
 
 # Mix flags and key=value
-ado config set --org MyOrg repo.columns=name,id,url
+ado config set --org MyOrg repo.columns=name,id,remote_url
 ```
 
 ## Configuration File
@@ -126,14 +126,14 @@ project: MyProject
 org: MyOrganization
 server: https://dev.azure.com
 repo:
-  columns: name,url,default_branch
+  columns: name,remote_url,default_branch
 ```
 
 **Configuration Keys**:
 - `project`: Azure DevOps project name (used by workitem commands)
 - `org`: Azure DevOps organization name (used by workitem commands)
 - `server`: Azure DevOps server URL (defaults to `https://dev.azure.com` if not set, used by workitem commands)
-- `repo.columns`: Comma-separated list of columns for `ado repo list` (defaults to `name,id,url,default_branch`)
+- `repo.columns`: Comma-separated list of field paths for `ado repo list` (defaults to `name,id,remote_url,default_branch`)
 
 ## Implementation Notes
 
@@ -328,8 +328,8 @@ def config_set(
 **Examples**:
 ```bash
 # Set nested config
-ado config set repo.columns=name,url
-# Results in: repo: {columns: "name,url"}
+ado config set repo.columns=name,remote_url
+# Results in: repo: {columns: "name,remote_url"}
 
 # Set multiple levels
 ado config set repo.display.compact=true
