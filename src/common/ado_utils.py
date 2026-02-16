@@ -1,7 +1,8 @@
 """Azure DevOps utility functions."""
 
+import json
 import re
-from typing import Optional
+from typing import Optional, Any
 from urllib.parse import urlparse
 
 
@@ -82,3 +83,37 @@ def build_ado_workitem_url(server: str, org: str, project: str, workitem_id: int
         Full Azure DevOps work item URL
     """
     return f"{server}/{org}/{project}/_workitems/edit/{workitem_id}"
+
+
+def get_nested_value(obj: Any, field_path: str) -> Any:
+    """
+    Get nested value from object using dot notation.
+
+    If a nested value is a JSON string, parse it before continuing.
+
+    Args:
+        obj: Object to access
+        field_path: Dot-separated path (e.g., "project.name")
+
+    Returns:
+        The value at the field path
+
+    Raises:
+        AttributeError: If field path is invalid
+    """
+    parts = field_path.split(".")
+    current = obj
+
+    for part in parts:
+        # Get the attribute
+        current = getattr(current, part)
+
+        # If it's a string and we have more parts to traverse, try parsing as JSON
+        if isinstance(current, str) and parts.index(part) < len(parts) - 1:
+            try:
+                current = json.loads(current)
+            except (json.JSONDecodeError, TypeError):
+                # Not valid JSON or not a string, continue with the object as-is
+                pass
+
+    return current

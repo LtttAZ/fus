@@ -1,6 +1,5 @@
 """ADO (Azure DevOps) CLI tool."""
 
-import json
 import typer
 import webbrowser
 from typing import Optional
@@ -9,7 +8,7 @@ from rich.console import Console
 from rich.table import Table
 from src.common.ado_config import get_config_path, read_config, write_config, AdoConfig
 from src.common.git_utils import is_git_repository, get_remote_url, get_current_branch
-from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url, build_ado_workitem_url
+from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url, build_ado_workitem_url, get_nested_value
 
 app = typer.Typer(help="Azure DevOps CLI tool")
 config_app = typer.Typer(help="Manage configuration")
@@ -153,40 +152,6 @@ def workitem_browse(
 # Default fields and column names for repo list
 DEFAULT_FIELDS = ["id", "name"]
 DEFAULT_COLUMN_NAMES = ["repo_id", "repo_name"]
-
-
-def get_nested_value(obj, field_path: str):
-    """
-    Get nested value from object using dot notation.
-
-    If a nested value is a JSON string, parse it before continuing.
-
-    Args:
-        obj: Object to access
-        field_path: Dot-separated path (e.g., "project.name")
-
-    Returns:
-        The value at the field path
-
-    Raises:
-        AttributeError: If field path is invalid
-    """
-    parts = field_path.split(".")
-    current = obj
-
-    for part in parts:
-        # Get the attribute
-        current = getattr(current, part)
-
-        # If it's a string and we have more parts to traverse, try parsing as JSON
-        if isinstance(current, str) and parts.index(part) < len(parts) - 1:
-            try:
-                current = json.loads(current)
-            except (json.JSONDecodeError, TypeError):
-                # Not valid JSON or not a string, continue with the object as-is
-                pass
-
-    return current
 
 
 @repo_app.command("list")

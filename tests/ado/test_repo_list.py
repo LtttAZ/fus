@@ -354,7 +354,7 @@ class TestRepoListGetNestedValue:
 
     def test_get_simple_field(self):
         """Test accessing simple field."""
-        from src.cli.ado import get_nested_value
+        from src.common.ado_utils import get_nested_value
 
         obj = Mock()
         obj.name = "test-repo"
@@ -364,7 +364,7 @@ class TestRepoListGetNestedValue:
 
     def test_get_nested_field(self):
         """Test accessing nested field."""
-        from src.cli.ado import get_nested_value
+        from src.common.ado_utils import get_nested_value
 
         project = Mock()
         project.name = "TestProject"
@@ -377,7 +377,7 @@ class TestRepoListGetNestedValue:
 
     def test_get_nested_field_with_json_parsing(self):
         """Test accessing nested field with JSON string parsing."""
-        from src.cli.ado import get_nested_value
+        from src.common.ado_utils import get_nested_value
         import json
 
         # Simulate a field that contains JSON string
@@ -397,7 +397,7 @@ class TestRepoListGetNestedValue:
 
     def test_get_invalid_field_raises_error(self):
         """Test that invalid field raises AttributeError."""
-        from src.cli.ado import get_nested_value
+        from src.common.ado_utils import get_nested_value
 
         obj = Mock(spec=[])  # Empty spec means no attributes
 
