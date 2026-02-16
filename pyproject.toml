@@ -10,7 +10,8 @@ dependencies = [
     "typer (>=0.23.1,<0.24.0)",
     "pydantic-settings (>=2.13.0,<3.0.0)",
     "platformdirs (>=4.9.1,<5.0.0)",
-    "pyyaml (>=6.0.3,<7.0.0)"
+    "pyyaml (>=6.0.3,<7.0.0)",
+    "azure-devops (>=7.1.0,<8.0.0)"
 ]
 
 

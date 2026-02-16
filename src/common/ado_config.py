@@ -1,5 +1,6 @@
 """ADO configuration management."""
 
+import os
 import yaml
 import typer
 from pathlib import Path
@@ -59,5 +60,15 @@ class AdoConfig:
         value = self._data.get("project")
         if not value:
             typer.echo("Error: Project not configured. Use 'ado config set --project <project>' to set it.")
+            raise typer.Exit(code=1)
+        return value
+
+    @property
+    def pat(self) -> str:
+        """Get Personal Access Token from environment variable, exits with error if not set."""
+        value = os.getenv("ADO_PAT")
+        if not value:
+            typer.echo("Error: ADO_PAT environment variable not set.")
+            typer.echo("Set it with: export ADO_PAT='your-personal-access-token'")
             raise typer.Exit(code=1)
         return value
