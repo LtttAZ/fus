@@ -26,7 +26,19 @@ poetry install
 
 ## Running CLIs
 
-Each CLI is run directly using Python:
+### From Anywhere (Recommended)
+
+Add the `scripts/` directory to your system PATH. Then you can run CLIs from any directory:
+
+```bash
+ado config set --project MyProject
+```
+
+The scripts automatically activate the venv and handle relative paths correctly.
+
+### From Project Directory
+
+Alternatively, run CLIs directly using Poetry:
 
 ```bash
 poetry run python src/cli/<cli_name>.py [args]
@@ -39,6 +51,8 @@ fus/
 ├── docs/                    # Design documents
 │   └── <cli_name>/         # Design docs for specific CLI
 │       └── design.md       # Feature design document
+├── scripts/                 # Wrapper scripts for running CLIs
+│   └── <cli_name>.bat      # Windows batch script (add this directory to PATH)
 ├── src/                     # Source code
 │   ├── cli/                # CLI entry points
 │   │   ├── __init__.py

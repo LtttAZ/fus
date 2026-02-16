@@ -9,9 +9,18 @@ This is a Python CLI project named "fus" using Poetry for dependency management.
 **Multiple CLIs:** This repository contains multiple CLI tools. Each CLI is run directly using Python (not compiled to executables).
 
 **Running CLIs:**
+
+From anywhere (if `scripts/` directory is in system PATH):
+```bash
+<cli_name> [args]
+```
+
+From project directory:
 ```bash
 poetry run python src/cli/<cli_name>.py [args]
 ```
+
+**Wrapper Scripts:** The `scripts/` directory contains batch files (`.bat`) for each CLI. These scripts activate the venv and call the CLI while preserving the caller's current directory for relative paths.
 
 ## Development Setup
 
