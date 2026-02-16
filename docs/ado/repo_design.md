@@ -2,7 +2,9 @@
 
 ## Overview
 
-The `ado repo` commands provide operations for Azure DevOps repositories. These commands work with git repositories and their Azure DevOps remote URLs.
+The `ado repo` commands provide operations for Azure DevOps repositories. These commands include:
+- **browse**: Opens repository in browser using git remote URL (no API required)
+- **list**: Lists all repositories in a project using Azure DevOps API (requires ADO_PAT)
 
 ## Commands
 
@@ -32,7 +34,203 @@ ado repo browse                    # Browse current branch
 ado repo browse --branch develop   # Browse specific branch
 ```
 
-## URL Construction
+### repo list
+
+**Purpose**: List all repositories in the configured Azure DevOps project.
+
+**Command**: `ado repo list`
+
+**Options**: None
+
+**Requirements**:
+- Configuration: `org`, `project` must be set in `~/.fus/ado.yaml`
+- Environment: `ADO_PAT` environment variable must be set
+
+**Behavior**:
+1. Loads configuration from `~/.fus/ado.yaml` (org, project, server)
+2. Reads PAT from `ADO_PAT` environment variable
+3. Creates AdoClient connection to Azure DevOps API
+4. Retrieves list of repositories in the project
+5. Displays repository information in a table format
+
+**Exit Codes**:
+- `0`: Success
+- `1`: Error (config missing, PAT not set, authentication failed, etc.)
+
+**Output Format**:
+
+Display repositories in a formatted table using `rich`:
+
+```
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
+┃ Name         ┃ ID                                   ┃ URL                                                           ┃ Default Branch   ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
+│ my-repo      │ 2f3d611a-f012-4b39-b157-8db63f380226 │ https://dev.azure.com/myorg/myproject/_git/my-repo            │ refs/heads/main  │
+│ another-repo │ 8a4b722c-e023-5c40-c268-9fc74e7f6e3e │ https://dev.azure.com/myorg/myproject/_git/another-repo       │ refs/heads/master│
+└──────────────┴──────────────────────────────────────┴───────────────────────────────────────────────────────────────┴──────────────────┘
+```
+
+**Alternative:** With `--simple` flag (optional future enhancement), use simple text output:
+```
+my-repo
+  ID: 2f3d611a-f012-4b39-b157-8db63f380226
+  URL: https://dev.azure.com/myorg/myproject/_git/my-repo
+  Default Branch: refs/heads/main
+
+another-repo
+  ID: 8a4b722c-e023-5c40-c268-9fc74e7f6e3e
+  URL: https://dev.azure.com/myorg/myproject/_git/another-repo
+  Default Branch: refs/heads/master
+```
+
+**Empty Project Output**:
+```
+No repositories found in project 'MyProject'
+```
+
+**Example Usage**:
+```bash
+# Configure org and project first
+ado config set --org myorg --project myproject
+
+# Set PAT
+export ADO_PAT="your-personal-access-token"
+
+# List repositories
+ado repo list
+```
+
+**Error Handling**:
+
+**Organization Not Configured**:
+- Message: `Error: Organization not configured. Use 'ado config set --org <org>' to set it.`
+- Exit Code: 1
+
+**Project Not Configured**:
+- Message: `Error: Project not configured. Use 'ado config set --project <project>' to set it.`
+- Exit Code: 1
+
+**PAT Not Set**:
+- Message:
+  ```
+  Error: ADO_PAT environment variable not set.
+  Set it with: export ADO_PAT='your-personal-access-token'
+  ```
+- Exit Code: 1
+
+**Authentication Failed**:
+- Message: `Error: Authentication failed. Check your ADO_PAT environment variable.`
+- Exit Code: 1
+
+**Project Not Found**:
+- Message: `Error: Resource not found: ...`
+- Exit Code: 1
+
+**API Error**:
+- Message: `Error: Azure DevOps API error: {error_message}`
+- Exit Code: 1
+
+**Implementation Notes**:
+
+**Dependencies**:
+- `src.common.ado_client`: For `AdoClient`
+- `src.common.ado_exceptions`: For `AdoClientError`, `AdoAuthError`, `AdoNotFoundError`
+- `src.common.ado_config`: For `AdoConfig`
+- `rich`: For table formatting and pretty output
+
+**Implementation Pattern**:
+```python
+from rich.console import Console
+from rich.table import Table
+
+@repo_app.command("list")
+def repo_list() -> None:
+    """List all repositories in the project."""
+    from src.common.ado_client import AdoClient
+    from src.common.ado_exceptions import AdoClientError
+
+    try:
+        client = AdoClient()
+        repos = client.list_repos()
+
+        if not repos:
+            config = client.config
+            typer.echo(f"No repositories found in project '{config.project}'")
+            return
+
+        # Create rich table
+        console = Console()
+        table = Table(show_header=True, header_style="bold cyan")
+        table.add_column("Name", style="green")
+        table.add_column("ID", style="dim")
+        table.add_column("URL", style="blue")
+        table.add_column("Default Branch", style="yellow")
+
+        for repo in repos:
+            table.add_row(
+                repo.name,
+                repo.id,
+                repo.remote_url,
+                repo.default_branch or "N/A"
+            )
+
+        console.print(table)
+
+    except AdoClientError as e:
+        typer.echo(f"Error: {e}")
+        raise typer.Exit(code=1)
+```
+
+**Repository Properties Used**:
+- `name`: Repository name
+- `id`: Repository GUID
+- `remote_url`: Git clone URL (HTTPS)
+- `default_branch`: Default branch reference (e.g., "refs/heads/main")
+
+**Additional Properties Available** (for future enhancements):
+- `ssh_url`: Git clone URL (SSH)
+- `web_url`: Browser URL
+- `project.name`: Project name
+- `project.id`: Project GUID
+- `size`: Repository size in bytes
+
+**Pretty Printing with Rich**:
+
+The command uses the `rich` library for formatted table output:
+- **Table with borders**: Clean, professional table formatting
+- **Colors**: Syntax highlighting for better readability
+  - Name: Green
+  - ID: Dim (gray)
+  - URL: Blue
+  - Default Branch: Yellow
+- **Header styling**: Bold cyan headers
+- **Responsive**: Adjusts to terminal width
+
+**Rich Features Used**:
+```python
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
+table = Table(show_header=True, header_style="bold cyan")
+table.add_column("Name", style="green")
+table.add_column("ID", style="dim")
+table.add_column("URL", style="blue")
+table.add_column("Default Branch", style="yellow")
+console.print(table)
+```
+
+**Dependency**:
+Add to `pyproject.toml`:
+```toml
+[project]
+dependencies = [
+    # ... existing dependencies ...
+    "rich (>=13.0.0,<14.0.0)"
+]
+```
+
+
 
 The command constructs an Azure DevOps repository URL using:
 
