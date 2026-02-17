@@ -29,8 +29,8 @@ ado repo list [--pattern <pattern>] [--open]
 
 **Configuration**:
 ```bash
-ado config set --repo-columns <fields>        # default: id,name
-ado config set --repo-column-names <names>    # default: repo_id,repo_name
+ado config set --repo.columns <fields>        # default: id,name
+ado config set --repo.column-names <names>    # default: repo_id,repo_name
 ```
 
 **Field access**: Supports dot notation for nested fields (e.g., `project.name`). Automatically parses JSON strings when traversing.
@@ -69,8 +69,8 @@ ado repo list --open                  # Display table, then prompt for repo numb
 ado repo list --pattern "api-*" --open  # Filter and open
 
 # Custom columns
-ado config set --repo-columns name,web_url,project.name
-ado config set --repo-column-names Repository,URL,Project
+ado config set --repo.columns name,web_url,project.name
+ado config set --repo.column-names Repository,URL,Project
 ```
 
 ## Implementation

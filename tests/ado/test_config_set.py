@@ -259,7 +259,7 @@ class TestConfigSetRepoOptions:
         """Test setting repo columns only."""
         from src.cli.ado import app
 
-        result = runner.invoke(app, ["config", "set", "--repo-columns", "name,url"])
+        result = runner.invoke(app, ["config", "set", "--repo.columns", "name,url"])
 
         assert result.exit_code == 0
         assert "Configuration saved: repo.columns=name,url" in result.stdout
@@ -274,7 +274,7 @@ class TestConfigSetRepoOptions:
         """Test setting repo column names only."""
         from src.cli.ado import app
 
-        result = runner.invoke(app, ["config", "set", "--repo-column-names", "Repository,URL"])
+        result = runner.invoke(app, ["config", "set", "--repo.column-names", "Repository,URL"])
 
         assert result.exit_code == 0
         assert "Configuration saved: repo.column-names=Repository,URL" in result.stdout
@@ -289,7 +289,7 @@ class TestConfigSetRepoOptions:
         """Test setting both repo columns and column names."""
         from src.cli.ado import app
 
-        result = runner.invoke(app, ["config", "set", "--repo-columns", "name,web_url", "--repo-column-names", "Name,URL"])
+        result = runner.invoke(app, ["config", "set", "--repo.columns", "name,web_url", "--repo.column-names", "Name,URL"])
 
         assert result.exit_code == 0
         assert "Configuration saved:" in result.stdout
@@ -307,7 +307,7 @@ class TestConfigSetRepoOptions:
         """Test setting repo options along with top-level config."""
         from src.cli.ado import app
 
-        result = runner.invoke(app, ["config", "set", "--org", "MyOrg", "--repo-columns", "id,name"])
+        result = runner.invoke(app, ["config", "set", "--org", "MyOrg", "--repo.columns", "id,name"])
 
         assert result.exit_code == 0
         assert "Configuration saved:" in result.stdout
@@ -338,7 +338,7 @@ class TestConfigSetRepoOptions:
             yaml.dump(initial_config, f)
 
         # Update only columns
-        result = runner.invoke(app, ["config", "set", "--repo-columns", "name,url"])
+        result = runner.invoke(app, ["config", "set", "--repo.columns", "name,url"])
 
         assert result.exit_code == 0
 

@@ -46,8 +46,8 @@ def config_set(
     project: Optional[str] = typer.Option(None, "--project", help="Azure DevOps project name"),
     org: Optional[str] = typer.Option(None, "--org", help="Azure DevOps organization name"),
     server: Optional[str] = typer.Option(None, "--server", help="Azure DevOps server URL"),
-    repo_columns: Optional[str] = typer.Option(None, "--repo-columns", help="Comma-separated list of repo columns to display"),
-    repo_column_names: Optional[str] = typer.Option(None, "--repo-column-names", help="Comma-separated list of repo column display names"),
+    repo_columns: Optional[str] = typer.Option(None, "--repo.columns", help="Comma-separated list of repo columns to display"),
+    repo_column_names: Optional[str] = typer.Option(None, "--repo.column-names", help="Comma-separated list of repo column display names"),
     repo_open: Optional[str] = typer.Option(None, "--repo.open", help="Prompt to open a repo after listing by default (true/false)"),
 ) -> None:
     """Set configuration values."""

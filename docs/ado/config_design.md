@@ -25,12 +25,12 @@ ado config list
 ado config set --project <project> --org <org> --server <server>
 
 # Repo-specific config
-ado config set --repo-columns <fields> --repo-column-names <display-names>
+ado config set --repo.columns <fields> --repo.column-names <display-names>
 ado config set --repo.open=true|false
 
 # Examples
 ado config set --org MyOrg --project MyProject
-ado config set --repo-columns id,name,web_url --repo-column-names "ID,Name,URL"
+ado config set --repo.columns id,name,web_url --repo.column-names "ID,Name,URL"
 ado config set --repo.open=false
 ```
 
