@@ -7,7 +7,14 @@ from typing import Optional
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-from src.common.ado_config import get_config_path, read_config, write_config, AdoConfig
+from src.common.ado_config import (
+    get_config_path,
+    read_config,
+    write_config,
+    AdoConfig,
+    DEFAULT_REPO_FIELDS,
+    DEFAULT_REPO_COLUMN_NAMES,
+)
 from src.common.git_utils import is_git_repository, get_remote_url, get_current_branch
 from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url, build_ado_workitem_url, get_nested_value
 
@@ -39,6 +46,34 @@ def set_nested_value(config: dict, key: str, value: str) -> None:
 
     # Set the final value
     current[parts[-1]] = value
+
+
+@config_app.command("init")
+def config_init() -> None:
+    """Initialize configuration file with default values."""
+    config_path = get_config_path()
+
+    # Check if config already exists
+    if config_path.exists():
+        typer.echo(f"Error: Configuration file already exists at: {config_path}")
+        typer.echo("Use 'ado config set' to update configuration.")
+        raise typer.Exit(code=1)
+
+    # Create config with default values
+    config = {
+        "server": "https://dev.azure.com",
+        "repo": {
+            "columns": ",".join(DEFAULT_REPO_FIELDS),
+            "column-names": ",".join(DEFAULT_REPO_COLUMN_NAMES),
+            "open": True,
+        }
+    }
+
+    # Write config file
+    write_config(config_path, config)
+
+    # Display success message
+    typer.echo(f"Configuration initialized at: {config_path}")
 
 
 @config_app.command("set")
