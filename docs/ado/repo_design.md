@@ -23,7 +23,7 @@ ado repo list [--pattern <pattern>] [--open]
 
 **Options**:
 - `--pattern <pattern>` (alias: `--patt`) - Filter repositories by name using glob pattern (e.g., `my-*`, `*-repo`, `proj-?`)
-- `--open` - After displaying the table, prompt to open a repository in the browser by entering its number from the `#` column
+- `--open` - Prompt to open a repository in the browser after listing; defaults to `repo.open` config value (default: `true`)
 
 **Requirements**: `org`, `project` in config; `ADO_PAT` env var
 
@@ -31,6 +31,7 @@ ado repo list [--pattern <pattern>] [--open]
 ```bash
 ado config set --repo.columns <fields>        # default: id,name
 ado config set --repo.column-names <names>    # default: repo_id,repo_name
+ado config set --repo.open=true|false         # default: true
 ```
 
 **Field access**: Supports dot notation for nested fields (e.g., `project.name`). Automatically parses JSON strings when traversing.
@@ -43,7 +44,7 @@ ado config set --repo.column-names <names>    # default: repo_id,repo_name
 - `[seq]` - matches any character in seq
 - `[!seq]` - matches any character not in seq
 
-**Interactive Open**: When `--open` is used, after displaying the table:
+**Interactive Open**: After displaying the table, if open is enabled (via `--open` flag or `repo.open` config):
 - Prompts user to enter a repository number from the `#` column
 - Validates the input (must be a valid number within range)
 - Opens the selected repository's `web_url` in the default browser
