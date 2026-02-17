@@ -150,11 +150,6 @@ def workitem_browse(
     webbrowser.open(url)
 
 
-# Default fields and column names for repo list
-DEFAULT_FIELDS = ["id", "name"]
-DEFAULT_COLUMN_NAMES = ["repo_id", "repo_name"]
-
-
 @repo_app.command("list")
 def repo_list(
     pattern: Optional[str] = typer.Option(None, "--pattern", "--patt", help="Filter repositories by name using glob pattern"),
@@ -177,30 +172,9 @@ def repo_list(
             typer.echo(f"No repositories found in project '{config.project}'")
             return
 
-        # Get fields configuration
-        fields_config = client.config.repo.columns
-        if fields_config:
-            fields = [f.strip() for f in fields_config.split(",")]
-        else:
-            fields = DEFAULT_FIELDS
-
-        # Get column names configuration
-        column_names_config = client.config.repo.column_names
-        if column_names_config:
-            column_names = [n.strip() for n in column_names_config.split(",")]
-            # Validate count matches
-            if len(column_names) != len(fields):
-                typer.echo(
-                    f"Warning: Number of column names ({len(column_names)}) doesn't match "
-                    f"number of columns ({len(fields)}). Using field names as headers."
-                )
-                column_names = fields
-        else:
-            # Use defaults if fields are default, otherwise use field names
-            if fields == DEFAULT_FIELDS:
-                column_names = DEFAULT_COLUMN_NAMES
-            else:
-                column_names = fields
+        # Get fields and column names from config (defaults and validation handled in ado_config)
+        fields = client.config.repo.columns
+        column_names = client.config.repo.column_names
 
         # Create rich table
         console = Console(width=200)  # Wider console to avoid truncation

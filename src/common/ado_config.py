@@ -7,6 +7,11 @@ from pathlib import Path
 from platformdirs import user_config_dir
 
 
+# Default fields and column names for repo list
+DEFAULT_REPO_FIELDS = ["id", "name"]
+DEFAULT_REPO_COLUMN_NAMES = ["repo_id", "repo_name"]
+
+
 def get_config_path() -> Path:
     """Get the path to the ado.yaml config file."""
     config_dir = Path(user_config_dir("fus"))
@@ -45,14 +50,33 @@ class RepoConfig:
         self._data = repo_data
 
     @property
-    def columns(self) -> str | None:
-        """Get configured columns for repo list, or None if not set."""
-        return self._data.get("columns")
+    def columns(self) -> list[str]:
+        """Get configured columns for repo list, returns defaults if not set."""
+        value = self._data.get("columns")
+        if not value:
+            return list(DEFAULT_REPO_FIELDS)  # Return copy to avoid mutation
+        return [f.strip() for f in value.split(",")]
 
     @property
-    def column_names(self) -> str | None:
-        """Get configured column names for repo list, or None if not set."""
-        return self._data.get("column-names")
+    def column_names(self) -> list[str]:
+        """Get configured column names for repo list, returns defaults if not set. Raises error if count mismatches columns."""
+        value = self._data.get("column-names")
+        columns = self.columns
+
+        if not value:
+            # If columns are also default, use DEFAULT_REPO_COLUMN_NAMES; otherwise use field names
+            if self._data.get("columns") is None:
+                return list(DEFAULT_REPO_COLUMN_NAMES)
+            return list(columns)
+
+        names = [n.strip() for n in value.split(",")]
+        if len(names) != len(columns):
+            typer.echo(
+                f"Error: Number of column names ({len(names)}) doesn't match "
+                f"number of columns ({len(columns)})."
+            )
+            raise typer.Exit(code=1)
+        return names
 
 
 class AdoConfig:

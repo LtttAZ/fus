@@ -238,7 +238,7 @@ class TestRepoListColumnNames:
     @patch("src.common.ado_client.Connection")
     @patch("src.common.ado_config.read_config")
     def test_list_repos_column_names_mismatch(self, mock_read_config, mock_connection, runner, mock_git_repositories):
-        """Test column names count mismatch shows warning and uses field names."""
+        """Test column names count mismatch raises error."""
         from src.cli.ado import app
 
         # Setup config with mismatch
@@ -263,13 +263,9 @@ class TestRepoListColumnNames:
         result = runner.invoke(app, ["repo", "list"])
 
         # Verify
-        assert result.exit_code == 0
-        # Should show warning
-        assert "Warning" in result.stdout
+        assert result.exit_code == 1
+        assert "Error" in result.stdout
         assert "doesn't match" in result.stdout
-        # Should fall back to field names
-        assert "name" in result.stdout
-        assert "web_url" in result.stdout
 
 
 class TestRepoListRowID:
