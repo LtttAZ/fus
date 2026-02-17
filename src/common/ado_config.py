@@ -18,6 +18,17 @@ def get_config_path() -> Path:
     return config_dir / "ado.yaml"
 
 
+def get_default_config() -> dict:
+    """Return default config dict (only keys that have defaults)."""
+    return {
+        "server": "https://dev.azure.com",
+        "repo": {
+            "columns": ",".join(DEFAULT_REPO_FIELDS),
+            "column-names": ",".join(DEFAULT_REPO_COLUMN_NAMES),
+            "open": True,
+        }
+    }
+
 def read_config(config_path: Path) -> dict:
     """Read and parse the YAML config file."""
     if not config_path.exists():

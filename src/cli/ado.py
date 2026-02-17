@@ -7,14 +7,7 @@ from typing import Optional
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-from src.common.ado_config import (
-    get_config_path,
-    read_config,
-    write_config,
-    AdoConfig,
-    DEFAULT_REPO_FIELDS,
-    DEFAULT_REPO_COLUMN_NAMES,
-)
+from src.common.ado_config import get_config_path, read_config, write_config, AdoConfig, get_default_config
 from src.common.git_utils import is_git_repository, get_remote_url, get_current_branch
 from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url, build_ado_workitem_url, get_nested_value
 
@@ -60,14 +53,7 @@ def config_init() -> None:
         raise typer.Exit(code=1)
 
     # Create config with default values
-    config = {
-        "server": "https://dev.azure.com",
-        "repo": {
-            "columns": ",".join(DEFAULT_REPO_FIELDS),
-            "column-names": ",".join(DEFAULT_REPO_COLUMN_NAMES),
-            "open": True,
-        }
-    }
+    config = get_default_config()
 
     # Write config file
     write_config(config_path, config)
