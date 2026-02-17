@@ -347,3 +347,38 @@ class TestConfigSetRepoOptions:
         assert config["repo"]["columns"] == "name,url"
         assert config["repo"]["column-names"] == "Name,ID"  # Preserved
 
+    def test_set_repo_open_true(self, runner, mock_config_dir):
+        """Test setting repo.open to true."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--repo.open=true"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved: repo.open=true" in result.stdout
+
+        config_path = get_config_path(mock_config_dir)
+        config = read_config(config_path)
+        assert config["repo"]["open"] is True
+
+    def test_set_repo_open_false(self, runner, mock_config_dir):
+        """Test setting repo.open to false."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--repo.open=false"])
+
+        assert result.exit_code == 0
+        assert "Configuration saved: repo.open=false" in result.stdout
+
+        config_path = get_config_path(mock_config_dir)
+        config = read_config(config_path)
+        assert config["repo"]["open"] is False
+
+    def test_set_repo_open_invalid_value(self, runner, mock_config_dir):
+        """Test that invalid value for repo.open raises error."""
+        from src.cli.ado import app
+
+        result = runner.invoke(app, ["config", "set", "--repo.open=yes"])
+
+        assert result.exit_code == 1
+        assert "Error: --repo.open must be 'true' or 'false'" in result.stdout
+

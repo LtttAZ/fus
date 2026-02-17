@@ -48,6 +48,7 @@ def config_set(
     server: Optional[str] = typer.Option(None, "--server", help="Azure DevOps server URL"),
     repo_columns: Optional[str] = typer.Option(None, "--repo-columns", help="Comma-separated list of repo columns to display"),
     repo_column_names: Optional[str] = typer.Option(None, "--repo-column-names", help="Comma-separated list of repo column display names"),
+    repo_open: Optional[str] = typer.Option(None, "--repo.open", help="Prompt to open a repo after listing by default (true/false)"),
 ) -> None:
     """Set configuration values."""
     # Collect provided options
@@ -73,6 +74,13 @@ def config_set(
     if repo_column_names is not None:
         set_nested_value(existing_config, "repo.column-names", repo_column_names)
         updates["repo.column-names"] = repo_column_names
+    if repo_open is not None:
+        if repo_open.lower() not in ("true", "false"):
+            typer.echo("Error: --repo.open must be 'true' or 'false'")
+            raise typer.Exit(code=1)
+        value = repo_open.lower() == "true"
+        set_nested_value(existing_config, "repo.open", value)
+        updates["repo.open"] = repo_open
 
     # Check that at least one option was provided
     if not updates:

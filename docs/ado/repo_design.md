@@ -51,7 +51,7 @@ ado config set --repo-column-names <names>    # default: repo_id,repo_name
 
 **Output**: Rich table with auto-incrementing `#` column + configured columns
 
-**Exit codes**: 0 (success), 1 (config missing, PAT not set, auth failed, invalid field, invalid repo number)
+**Exit codes**: 0 (success), 1 (config missing, PAT not set, auth failed, invalid field, invalid repo number, column name count mismatch)
 
 **Example**:
 ```bash
@@ -79,7 +79,7 @@ ado config set --repo-column-names Repository,URL,Project
 - `AdoClient.list_repos()` - Fetches repos via Azure DevOps SDK
 - `fnmatch.fnmatch()` - Client-side filtering using glob patterns
 - `get_nested_value(obj, field_path)` in `src.common.ado_utils` - Handles dot notation with JSON parsing
-- `config.repo.columns` / `config.repo.column_names` - Access via `RepoConfig` class
+- `config.repo.columns` / `config.repo.column_names` - `RepoConfig` properties returning `list[str]` with defaults applied; `column_names` raises error on count mismatch
 - Rich table with `Console(width=200)` and `no_wrap=True` columns
 
 **Error handling**: Config validation via `AdoConfig` properties, field access errors caught and reported

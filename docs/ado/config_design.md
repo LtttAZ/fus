@@ -26,10 +26,12 @@ ado config set --project <project> --org <org> --server <server>
 
 # Repo-specific config
 ado config set --repo-columns <fields> --repo-column-names <display-names>
+ado config set --repo.open=true|false
 
 # Examples
 ado config set --org MyOrg --project MyProject
 ado config set --repo-columns id,name,web_url --repo-column-names "ID,Name,URL"
+ado config set --repo.open=false
 ```
 
 **Behavior**: Merges with existing config (preserves unspecified values). Requires at least one option.
@@ -45,6 +47,7 @@ server: https://dev.azure.com  # default
 repo:
   columns: id,name  # default
   column-names: repo_id,repo_name  # default
+  open: true  # default
 ```
 
 ## Implementation
@@ -66,13 +69,15 @@ class AdoConfig:
     def repo(self) -> RepoConfig:  # lazy-initialized
 ```
 
-**RepoConfig** - Repo-specific config:
+**RepoConfig** - Repo-specific config, all properties return typed values with defaults applied:
 ```python
 class RepoConfig:
     @property
-    def columns(self) -> str | None
+    def columns(self) -> list[str]       # default: ["id", "name"]
     @property
-    def column_names(self) -> str | None
+    def column_names(self) -> list[str]  # default: ["repo_id", "repo_name"]; raises error on count mismatch
+    @property
+    def open(self) -> bool               # default: True
 ```
 
 ### Helper Functions

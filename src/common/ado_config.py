@@ -78,6 +78,14 @@ class RepoConfig:
             raise typer.Exit(code=1)
         return names
 
+    @property
+    def open(self) -> bool:
+        """Get whether to prompt to open a repository after listing, defaults to True."""
+        value = self._data.get("open")
+        if value is None:
+            return True
+        return bool(value)
+
 
 class AdoConfig:
     """ADO configuration with validation and error handling."""
