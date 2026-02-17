@@ -10,6 +10,7 @@ The `ado` CLI provides commands for interacting with Azure DevOps. Supports conf
 
 ```bash
 # Configuration commands
+ado config init
 ado config set [--project=<project>] [--org=<organization>] [--server=<server>]
 ado config list
 
@@ -30,7 +31,8 @@ Manage ADO CLI configuration settings.
 **Detailed design**: [config_design.md](config_design.md)
 
 **Commands**:
-- `ado config set` - Set configuration values (project, org, server)
+- `ado config init` - Create config file with default values
+- `ado config set` - Set configuration values (project, org, server, repo options)
 - `ado config list` - List all current configuration values
 
 ### Repository Commands
@@ -95,6 +97,9 @@ server: https://dev.azure.com
 ## Quick Examples
 
 ```bash
+# Initialize configuration with defaults
+ado config init
+
 # Set up configuration
 ado config set --project MyProject --org MyOrg
 ado config set --server https://dev.azure.com

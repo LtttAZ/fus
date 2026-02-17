@@ -9,6 +9,30 @@
 
 ## Commands
 
+### config init
+
+Creates config file with default values for keys that have defaults. Skips keys without defaults (`org`, `project`).
+
+```bash
+ado config init
+```
+
+**Behavior**:
+- Creates config directory if it doesn't exist
+- Creates `ado.yaml` with default values
+- If config file already exists, exits with error (use `config set` to update)
+
+**Created file**:
+```yaml
+server: https://dev.azure.com
+repo:
+  columns: id,name
+  column-names: repo_id,repo_name
+  open: true
+```
+
+**Exit codes**: 0 (success), 1 (config file already exists)
+
 ### config list
 
 Lists all config values alphabetically. Default `server: https://dev.azure.com` shown if not configured.
