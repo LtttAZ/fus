@@ -182,7 +182,7 @@ def workitem_browse(
 @repo_app.command("list")
 def repo_list(
     pattern: Optional[str] = typer.Option(None, "--pattern", "--patt", help="Filter repositories by name using glob pattern"),
-    open_repo: bool = typer.Option(False, "--open", help="Prompt to open a repository in browser after listing"),
+    open_repo: Optional[bool] = typer.Option(None, "--open", help="Prompt to open a repository in browser after listing (defaults to repo.open config)"),
 ) -> None:
     """List all repositories in the project."""
     from src.common.ado_client import AdoClient
@@ -191,6 +191,9 @@ def repo_list(
     try:
         client = AdoClient()
         repos = client.list_repos()
+
+        # Apply default for open_repo from config if not specified
+        should_open = open_repo if open_repo is not None else client.config.repo.open
 
         # Apply pattern filter if provided
         if pattern:
@@ -231,7 +234,7 @@ def repo_list(
         console.print(table)
 
         # Handle --open flag
-        if open_repo:
+        if should_open:
             typer.echo("\nEnter repository number to open (or press Ctrl+C to cancel): ", nl=False)
             repo_num_str = input()
 

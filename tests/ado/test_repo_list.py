@@ -67,7 +67,8 @@ class TestRepoListBasic:
         # Setup config
         mock_read_config.return_value = {
             "org": "TestOrg",
-            "project": "TestProject"
+            "project": "TestProject",
+            "repo": {"open": False}
         }
 
         # Setup mocks
@@ -139,7 +140,8 @@ class TestRepoListCustomColumns:
             "org": "TestOrg",
             "project": "TestProject",
             "repo": {
-                "columns": "name,remote_url"
+                "columns": "name,remote_url",
+                "open": False
             }
         }
 
@@ -175,7 +177,8 @@ class TestRepoListCustomColumns:
             "org": "TestOrg",
             "project": "TestProject",
             "repo": {
-                "columns": "name,project.name,project.id"
+                "columns": "name,project.name,project.id",
+                "open": False
             }
         }
 
@@ -213,7 +216,8 @@ class TestRepoListColumnNames:
             "project": "TestProject",
             "repo": {
                 "columns": "name,web_url",
-                "column-names": "Repository,URL"
+                "column-names": "Repository,URL",
+                "open": False
             }
         }
 
@@ -281,7 +285,8 @@ class TestRepoListRowID:
         # Setup config
         mock_read_config.return_value = {
             "org": "TestOrg",
-            "project": "TestProject"
+            "project": "TestProject",
+            "repo": {"open": False}
         }
 
         # Setup mocks
@@ -386,7 +391,8 @@ class TestRepoListPattern:
         # Setup config
         mock_read_config.return_value = {
             "org": "TestOrg",
-            "project": "TestProject"
+            "project": "TestProject",
+            "repo": {"open": False}
         }
 
         # Setup mocks
@@ -414,7 +420,8 @@ class TestRepoListPattern:
         # Setup config
         mock_read_config.return_value = {
             "org": "TestOrg",
-            "project": "TestProject"
+            "project": "TestProject",
+            "repo": {"open": False}
         }
 
         # Setup mocks
@@ -469,7 +476,8 @@ class TestRepoListPattern:
         # Setup config
         mock_read_config.return_value = {
             "org": "TestOrg",
-            "project": "TestProject"
+            "project": "TestProject",
+            "repo": {"open": False}
         }
 
         # Setup mocks
@@ -497,7 +505,8 @@ class TestRepoListPattern:
         # Setup config
         mock_read_config.return_value = {
             "org": "TestOrg",
-            "project": "TestProject"
+            "project": "TestProject",
+            "repo": {"open": False}
         }
 
         # Setup mocks
@@ -518,6 +527,64 @@ class TestRepoListPattern:
 
 class TestRepoListOpen:
     """Test --open flag functionality."""
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    @patch("webbrowser.open")
+    def test_list_repos_open_defaults_to_config(self, mock_browser, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test that open behavior defaults to repo.open config value."""
+        from src.cli.ado import app
+
+        # Setup config with repo.open: true (default)
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject",
+            "repo": {"open": True}
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run without --open flag, but config has open: true
+        result = runner.invoke(app, ["repo", "list"], input="1\n")
+
+        assert result.exit_code == 0
+        assert "Enter repository number to open" in result.stdout
+        mock_browser.assert_called_once()
+
+    @patch.dict(os.environ, {"ADO_PAT": "test-token"})
+    @patch("src.common.ado_client.Connection")
+    @patch("src.common.ado_config.read_config")
+    @patch("webbrowser.open")
+    def test_list_repos_open_flag_overrides_config(self, mock_browser, mock_read_config, mock_connection, runner, mock_git_repositories):
+        """Test that --open flag overrides repo.open: false in config."""
+        from src.cli.ado import app
+
+        # Setup config with repo.open: false
+        mock_read_config.return_value = {
+            "org": "TestOrg",
+            "project": "TestProject",
+            "repo": {"open": False}
+        }
+
+        # Setup mocks
+        mock_git_client = Mock()
+        mock_git_client.get_repositories.return_value = mock_git_repositories
+        mock_conn_instance = Mock()
+        mock_conn_instance.clients.get_git_client.return_value = mock_git_client
+        mock_connection.return_value = mock_conn_instance
+
+        # Run with --open flag, overriding config
+        result = runner.invoke(app, ["repo", "list", "--open"], input="1\n")
+
+        assert result.exit_code == 0
+        assert "Enter repository number to open" in result.stdout
+        mock_browser.assert_called_once()
 
     @patch.dict(os.environ, {"ADO_PAT": "test-token"})
     @patch("src.common.ado_client.Connection")
