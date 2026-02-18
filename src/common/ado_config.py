@@ -20,6 +20,7 @@ def get_config_path() -> Path:
 
 DEFAULT_BUILD_FIELDS = ["id", "build_number", "status", "result", "definition.name", "source_branch", "queue_time", "finish_time"]
 DEFAULT_BUILD_COLUMN_NAMES = ["Build ID", "Number", "Status", "Result", "Pipeline", "Branch", "Queued", "Finished"]
+DEFAULT_BUILD_TOP = 50
 
 
 def get_default_config() -> dict:
@@ -35,6 +36,7 @@ def get_default_config() -> dict:
             "columns": ",".join(DEFAULT_BUILD_FIELDS),
             "column-names": ",".join(DEFAULT_BUILD_COLUMN_NAMES),
             "open": True,
+            "top": DEFAULT_BUILD_TOP,
         }
     }
 
@@ -155,6 +157,11 @@ class BuildConfig:
         if value is None:
             return True
         return bool(value)
+
+    @property
+    def top(self) -> int:
+        """Get maximum builds to return, defaults to 50."""
+        return int(self._data.get("top", DEFAULT_BUILD_TOP))
 
 
 class AdoConfig:

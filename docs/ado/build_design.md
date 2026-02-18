@@ -12,7 +12,7 @@ ado build list --repo-name <name> [--top N]
 
 **Options**:
 - `--repo-name <name>` - Repository name (required, resolved to GUID via local cache)
-- `--top N` - Maximum builds to return (default: 50)
+- `--top N` - Maximum builds to return; overrides `build.top` config if specified (default: uses `build.top` config, which defaults to 50)
 
 **Requirements**: `org`, `project` in config; `ADO_PAT` env var; repository must exist in local cache (populate with `ado repo list`)
 
@@ -21,6 +21,7 @@ ado build list --repo-name <name> [--top N]
 ado config set --build.columns <fields>        # default: id,build_number,status,result,definition.name,source_branch,queue_time,finish_time
 ado config set --build.column-names <names>    # default: Build ID,Number,Status,Result,Pipeline,Branch,Queued,Finished
 ado config set --build.open true|false         # default: true
+ado config set --build.top <N>                 # default: 50
 ```
 
 **Field access**: Supports dot notation for nested fields (e.g., `definition.name`).
@@ -62,15 +63,15 @@ ado build list --repo-name my-repo
 ## Implementation
 
 **Key Components**:
-- `BuildConfig` - Build-specific configuration class in `src/common/ado_config.py`, mirrors `RepoConfig` with properties for `columns`, `column_names`, `open`
+- `BuildConfig` - Build-specific configuration class in `src/common/ado_config.py`, mirrors `RepoConfig` with properties for `columns`, `column_names`, `open`, `top`
 - `AdoClient.list_builds()` - Azure DevOps Build API wrapper method that accepts repo_id and top parameter
 - `build_ado_build_url()` in `src/common/ado_utils.py` - Constructs build results URL
 - `get_nested_value(obj, field_path)` - Existing utility for dot-notation field access
 - Rich table display with Console(width=200)
 
 **Config Extension**:
-- `get_default_config()` now includes `build` section with default columns/column-names/open
-- `config set` command extended with `--build.columns`, `--build.column-names`, `--build.open` options
+- `get_default_config()` now includes `build` section with default columns/column-names/open/top
+- `config set` command extended with `--build.columns`, `--build.column-names`, `--build.open`, `--build.top` options
 
 **Error Handling**:
 - Repo not found: Check cache via `ado_repo_db.get_id_by_name()`, exit 1 if None

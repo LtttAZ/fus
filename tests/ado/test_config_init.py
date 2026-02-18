@@ -142,7 +142,7 @@ class TestConfigInitStructure:
         assert set(config["repo"].keys()) == {"columns", "column-names", "open"}
 
         # Should have exactly these build keys
-        assert set(config["build"].keys()) == {"columns", "column-names", "open"}
+        assert set(config["build"].keys()) == {"columns", "column-names", "open", "top"}
 
     def test_init_uses_correct_default_values(self, runner, mock_config_dir):
         """Test that all default values are correct."""
@@ -160,6 +160,10 @@ class TestConfigInitStructure:
         assert config["repo"]["columns"] == "id,name"
         assert config["repo"]["column-names"] == "repo_id,repo_name"
         assert config["repo"]["open"] is True  # Boolean, not string
+        assert config["build"]["columns"] == "id,build_number,status,result,definition.name,source_branch,queue_time,finish_time"
+        assert config["build"]["column-names"] == "Build ID,Number,Status,Result,Pipeline,Branch,Queued,Finished"
+        assert config["build"]["open"] is True  # Boolean, not string
+        assert config["build"]["top"] == 50  # Default max builds
 
 
 class TestConfigInitExitCodes:

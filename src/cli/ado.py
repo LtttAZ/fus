@@ -76,6 +76,7 @@ def config_set(
     build_columns: Optional[str] = typer.Option(None, "--build.columns", help="Comma-separated list of build columns to display"),
     build_column_names: Optional[str] = typer.Option(None, "--build.column-names", help="Comma-separated list of build column display names"),
     build_open: Optional[str] = typer.Option(None, "--build.open", help="Prompt to open a build after listing by default (true/false)"),
+    build_top: Optional[str] = typer.Option(None, "--build.top", help="Default max builds to return"),
 ) -> None:
     """Set configuration values."""
     # Collect provided options
@@ -123,6 +124,16 @@ def config_set(
         value = build_open.lower() == "true"
         set_nested_value(existing_config, "build.open", value)
         updates["build.open"] = build_open
+    if build_top is not None:
+        try:
+            top_value = int(build_top)
+            if top_value < 1:
+                raise ValueError
+        except ValueError:
+            typer.echo("Error: --build.top must be a positive integer")
+            raise typer.Exit(code=1)
+        set_nested_value(existing_config, "build.top", top_value)
+        updates["build.top"] = build_top
 
     # Check that at least one option was provided
     if not updates:
@@ -204,7 +215,7 @@ def workitem_browse(
 @build_app.command("list")
 def build_list(
     repo_name: str = typer.Option(..., "--repo-name", help="Repository name"),
-    top: int = typer.Option(50, "--top", help="Max builds to return"),
+    top: Optional[int] = typer.Option(None, "--top", help="Max builds to return (overrides build.top config)"),
 ) -> None:
     """List recent builds for a repository."""
     from src.common import ado_repo_db
@@ -222,7 +233,8 @@ def build_list(
     try:
         config = AdoConfig()
         client = AdoClient(config)
-        builds = client.list_builds(repo_id, top=top)
+        effective_top = top if top is not None else config.build.top
+        builds = client.list_builds(repo_id, top=effective_top)
     except AdoClientError as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit(code=1)
