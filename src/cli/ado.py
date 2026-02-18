@@ -188,9 +188,12 @@ def repo_list(
     from src.common.ado_client import AdoClient
     from src.common.ado_exceptions import AdoClientError
 
+    from src.common.ado_repo_db import upsert_all
+
     try:
         client = AdoClient()
         repos = client.list_repos()
+        upsert_all(repos)  # Cache repo ID/name mapping for future build queries
 
         # Apply default for open_repo from config if not specified
         should_open = open_repo if open_repo is not None else client.config.repo.open
