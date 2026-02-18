@@ -3,31 +3,6 @@
 import pytest
 import yaml
 from pathlib import Path
-from typer.testing import CliRunner
-from unittest.mock import patch
-import tempfile
-import shutil
-
-
-@pytest.fixture
-def temp_config_dir():
-    """Create a temporary config directory for testing."""
-    temp_dir = tempfile.mkdtemp()
-    yield temp_dir
-    shutil.rmtree(temp_dir)
-
-
-@pytest.fixture
-def runner():
-    """Create a CliRunner for testing."""
-    return CliRunner()
-
-
-@pytest.fixture
-def mock_config_dir(temp_config_dir):
-    """Mock platformdirs.user_config_dir to return temp directory."""
-    with patch('src.common.ado_config.user_config_dir', return_value=temp_config_dir):
-        yield temp_config_dir
 
 
 def get_config_path(config_dir: str) -> Path:
@@ -37,8 +12,17 @@ def get_config_path(config_dir: str) -> Path:
 
 def read_config(config_path: Path) -> dict:
     """Read and parse the YAML config file."""
+    if not config_path.exists():
+        return {}
     with open(config_path, 'r') as f:
         return yaml.safe_load(f) or {}
+
+
+def write_config(config_path: Path, config: dict) -> None:
+    """Write config dictionary to YAML file."""
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_path, 'w') as f:
+        yaml.dump(config, f)
 
 
 class TestConfigSetSingleOption:

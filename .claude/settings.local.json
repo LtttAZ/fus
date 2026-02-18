@@ -7,7 +7,10 @@
       "Bash(git commit:*)",
       "Bash(poetry add:*)",
       "Bash(poetry run pytest:*)",
-      "Bash(poetry run python:*)"
+      "Bash(poetry run python:*)",
+      "Bash(.venv\\\\Scripts\\\\python -m pytest:*)",
+      "Bash(./.venv/Scripts/python -m pytest:*)",
+      "Bash(./.venv/Scripts/python:*)"
     ]
   }
 }

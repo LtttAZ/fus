@@ -3,14 +3,7 @@
 import os
 import pytest
 from unittest.mock import Mock, patch, call
-from typer.testing import CliRunner
 from datetime import datetime
-
-
-@pytest.fixture
-def runner():
-    """Create a CliRunner for testing."""
-    return CliRunner()
 
 
 @pytest.fixture
