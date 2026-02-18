@@ -7,6 +7,14 @@ from pathlib import Path
 from unittest.mock import patch
 from typer.testing import CliRunner
 
+# Pre-import ado module so its 'read_config' reference binds to the real function
+# BEFORE any tests run their patches. Without this, if ado.py is first imported
+# during a test_build_list test (which patches ado_config.read_config), ado.py
+# captures the Mock instead of the real function. The Mock persists in ado.py's
+# namespace after the patch is restored, causing subsequent tests to receive
+# stale Mock return values (TestOrg/TestProject) instead of reading the real file.
+import src.cli.ado  # noqa: F401
+
 
 @pytest.fixture
 def temp_config_dir():
