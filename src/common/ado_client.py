@@ -27,6 +27,7 @@ class AdoClient:
         self.config = config or AdoConfig()
         self._connection = self._create_connection()
         self._git_client = self._connection.clients.get_git_client()
+        self._build_client = self._connection.clients.get_build_client()
 
     def _create_connection(self) -> Connection:
         """Create Azure DevOps connection with authentication."""
@@ -88,6 +89,32 @@ class AdoClient:
                 repository_id=repo_id
             )
             return repo
+        except Exception as e:
+            self._handle_sdk_exception(e)
+
+    def list_builds(self, repo_id: str, top: int = 50) -> list:
+        """
+        List recent builds for a repository.
+
+        Args:
+            repo_id: Repository ID
+            top: Maximum number of builds to return (default: 50)
+
+        Returns:
+            List of Build objects
+
+        Raises:
+            AdoClientError: If API request fails
+            AdoAuthError: If authentication fails
+        """
+        try:
+            builds = self._build_client.get_builds(
+                project=self.config.project,
+                repository_id=repo_id,
+                repository_type="TfsGit",
+                top=top,
+            )
+            return builds
         except Exception as e:
             self._handle_sdk_exception(e)
 

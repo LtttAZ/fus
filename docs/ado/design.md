@@ -18,6 +18,9 @@ ado config list
 ado repo browse [--branch=<branch>]
 ado repo list [--pattern=<pattern>] [--open]
 
+# Build commands
+ado build list --repo-name=<name> [--top=N]
+
 # Work item commands
 ado workitem browse --id=<id>
 ado wi browse --id=<id>          # Alias for workitem
@@ -43,6 +46,14 @@ Operations for Azure DevOps repositories.
 **Commands**:
 - `ado repo browse` - Open repository in browser (uses git remote URL)
 - `ado repo list` - List all repositories in project with optional pattern filtering and interactive open (uses API, requires ADO_PAT)
+
+### Build Commands
+Operations for Azure DevOps CI/CD builds.
+
+**Detailed design**: [build_design.md](build_design.md)
+
+**Commands**:
+- `ado build list` - List recent builds for a repository with optional interactive opening
 
 ### Work Item Commands
 Operations for Azure DevOps work items using configuration settings.
@@ -107,7 +118,7 @@ ado config set --server https://dev.azure.com
 # List current configuration
 ado config list
 
-# Set up PAT for API operations (required for repo list)
+# Set up PAT for API operations (required for repo list and build list)
 export ADO_PAT="your-personal-access-token"  # Linux/macOS/Git Bash
 set ADO_PAT=your-personal-access-token       # Windows Command Prompt
 $env:ADO_PAT="your-personal-access-token"    # Windows PowerShell
@@ -122,6 +133,10 @@ ado repo list --pattern "my-*"         # Filter by pattern
 ado repo list --patt "*-service"       # Using alias
 ado repo list --open                   # Interactive open after listing
 ado repo list --pattern "api-*" --open # Filter and open
+
+# List builds for a repository (requires ADO_PAT)
+ado build list --repo-name my-repo     # Show last 50 builds
+ado build list --repo-name my-repo --top 10  # Limit to 10 most recent
 
 # Browse work item
 ado wi browse --id 12345
@@ -145,10 +160,12 @@ See [../cli_design.md](../cli_design.md) for common CLI implementation patterns.
 app = typer.Typer(help="Azure DevOps CLI tool")
 config_app = typer.Typer(help="Manage configuration")
 repo_app = typer.Typer(help="Repository commands")
+build_app = typer.Typer(help="Build commands")
 workitem_app = typer.Typer(help="Work item commands")
 
 app.add_typer(config_app, name="config")
 app.add_typer(repo_app, name="repo")
+app.add_typer(build_app, name="build")
 app.add_typer(workitem_app, name="workitem")
 app.add_typer(workitem_app, name="wi")  # Alias
 ```

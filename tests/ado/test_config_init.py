@@ -153,10 +153,13 @@ class TestConfigInitStructure:
         config = read_config(config_path)
 
         # Should have exactly these top-level keys
-        assert set(config.keys()) == {"server", "repo"}
+        assert set(config.keys()) == {"server", "repo", "build"}
 
         # Should have exactly these repo keys
         assert set(config["repo"].keys()) == {"columns", "column-names", "open"}
+
+        # Should have exactly these build keys
+        assert set(config["build"].keys()) == {"columns", "column-names", "open"}
 
     def test_init_uses_correct_default_values(self, runner, mock_config_dir):
         """Test that all default values are correct."""

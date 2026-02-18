@@ -18,6 +18,10 @@ def get_config_path() -> Path:
     return config_dir / "ado.yaml"
 
 
+DEFAULT_BUILD_FIELDS = ["id", "build_number", "status", "result", "definition.name", "source_branch", "queue_time", "finish_time"]
+DEFAULT_BUILD_COLUMN_NAMES = ["Build ID", "Number", "Status", "Result", "Pipeline", "Branch", "Queued", "Finished"]
+
+
 def get_default_config() -> dict:
     """Return default config dict (only keys that have defaults)."""
     return {
@@ -25,6 +29,11 @@ def get_default_config() -> dict:
         "repo": {
             "columns": ",".join(DEFAULT_REPO_FIELDS),
             "column-names": ",".join(DEFAULT_REPO_COLUMN_NAMES),
+            "open": True,
+        },
+        "build": {
+            "columns": ",".join(DEFAULT_BUILD_FIELDS),
+            "column-names": ",".join(DEFAULT_BUILD_COLUMN_NAMES),
             "open": True,
         }
     }
@@ -98,6 +107,56 @@ class RepoConfig:
         return bool(value)
 
 
+class BuildConfig:
+    """Build-specific configuration."""
+
+    def __init__(self, build_data: dict):
+        """
+        Initialize build config.
+
+        Args:
+            build_data: Dictionary containing build-specific config
+        """
+        self._data = build_data
+
+    @property
+    def columns(self) -> list[str]:
+        """Get configured columns for build list, returns defaults if not set."""
+        value = self._data.get("columns")
+        if not value:
+            return list(DEFAULT_BUILD_FIELDS)  # Return copy to avoid mutation
+        return [f.strip() for f in value.split(",")]
+
+    @property
+    def column_names(self) -> list[str]:
+        """Get configured column names for build list, returns defaults if not set. Raises error if count mismatches columns."""
+        value = self._data.get("column-names")
+        columns = self.columns
+
+        if not value:
+            # If columns are also default, use DEFAULT_BUILD_COLUMN_NAMES; otherwise use field names
+            if self._data.get("columns") is None:
+                return list(DEFAULT_BUILD_COLUMN_NAMES)
+            return list(columns)
+
+        names = [n.strip() for n in value.split(",")]
+        if len(names) != len(columns):
+            typer.echo(
+                f"Error: Number of column names ({len(names)}) doesn't match "
+                f"number of columns ({len(columns)})."
+            )
+            raise typer.Exit(code=1)
+        return names
+
+    @property
+    def open(self) -> bool:
+        """Get whether to prompt to open a build after listing, defaults to True."""
+        value = self._data.get("open")
+        if value is None:
+            return True
+        return bool(value)
+
+
 class AdoConfig:
     """ADO configuration with validation and error handling."""
 
@@ -106,6 +165,7 @@ class AdoConfig:
         self.config_path = get_config_path()
         self._data = read_config(self.config_path)
         self._repo_config = None
+        self._build_config = None
 
     @property
     def server(self) -> str:
@@ -147,3 +207,11 @@ class AdoConfig:
             repo_data = self._data.get("repo", {})
             self._repo_config = RepoConfig(repo_data)
         return self._repo_config
+
+    @property
+    def build(self) -> BuildConfig:
+        """Get build-specific configuration."""
+        if self._build_config is None:
+            build_data = self._data.get("build", {})
+            self._build_config = BuildConfig(build_data)
+        return self._build_config

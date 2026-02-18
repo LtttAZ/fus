@@ -85,6 +85,22 @@ def build_ado_workitem_url(server: str, org: str, project: str, workitem_id: int
     return f"{server}/{org}/{project}/_workitems/edit/{workitem_id}"
 
 
+def build_ado_build_url(server: str, org: str, project: str, build_id: int) -> str:
+    """
+    Build Azure DevOps build URL.
+
+    Args:
+        server: Server base URL (e.g., "https://dev.azure.com" or on-premises server)
+        org: Organization name
+        project: Project name
+        build_id: Build ID
+
+    Returns:
+        Full Azure DevOps build results URL
+    """
+    return f"{server}/{org}/{project}/_build/results?buildId={build_id}"
+
+
 def get_nested_value(obj: Any, field_path: str) -> Any:
     """
     Get nested value from object using dot notation.

@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.table import Table
 from src.common.ado_config import get_config_path, read_config, write_config, AdoConfig, get_default_config
 from src.common.git_utils import is_git_repository, get_remote_url, get_current_branch
-from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url, build_ado_workitem_url, get_nested_value
+from src.common.ado_utils import parse_ado_remote_url, build_ado_repo_url, build_ado_workitem_url, build_ado_build_url, get_nested_value
 
 app = typer.Typer(help="Azure DevOps CLI tool")
 config_app = typer.Typer(help="Manage configuration")
@@ -21,6 +21,9 @@ app.add_typer(repo_app, name="repo")
 workitem_app = typer.Typer(help="Work item commands")
 app.add_typer(workitem_app, name="workitem")
 app.add_typer(workitem_app, name="wi")
+
+build_app = typer.Typer(help="Build commands")
+app.add_typer(build_app, name="build")
 
 
 def set_nested_value(config: dict, key: str, value: str) -> None:
@@ -70,6 +73,9 @@ def config_set(
     repo_columns: Optional[str] = typer.Option(None, "--repo.columns", help="Comma-separated list of repo columns to display"),
     repo_column_names: Optional[str] = typer.Option(None, "--repo.column-names", help="Comma-separated list of repo column display names"),
     repo_open: Optional[str] = typer.Option(None, "--repo.open", help="Prompt to open a repo after listing by default (true/false)"),
+    build_columns: Optional[str] = typer.Option(None, "--build.columns", help="Comma-separated list of build columns to display"),
+    build_column_names: Optional[str] = typer.Option(None, "--build.column-names", help="Comma-separated list of build column display names"),
+    build_open: Optional[str] = typer.Option(None, "--build.open", help="Prompt to open a build after listing by default (true/false)"),
 ) -> None:
     """Set configuration values."""
     # Collect provided options
@@ -103,6 +109,21 @@ def config_set(
         set_nested_value(existing_config, "repo.open", value)
         updates["repo.open"] = repo_open
 
+    # Process nested build config
+    if build_columns is not None:
+        set_nested_value(existing_config, "build.columns", build_columns)
+        updates["build.columns"] = build_columns
+    if build_column_names is not None:
+        set_nested_value(existing_config, "build.column-names", build_column_names)
+        updates["build.column-names"] = build_column_names
+    if build_open is not None:
+        if build_open.lower() not in ("true", "false"):
+            typer.echo("Error: --build.open must be 'true' or 'false'")
+            raise typer.Exit(code=1)
+        value = build_open.lower() == "true"
+        set_nested_value(existing_config, "build.open", value)
+        updates["build.open"] = build_open
+
     # Check that at least one option was provided
     if not updates:
         typer.echo("At least one configuration option must be provided")
@@ -126,9 +147,10 @@ def config_list() -> None:
     if "server" not in config:
         config["server"] = "https://dev.azure.com"
 
-    # Sort and display
+    # Sort and display (only scalar values, skip nested dicts like repo and build)
     for key in sorted(config.keys()):
-        typer.echo(f"{key}: {config[key]}")
+        if not isinstance(config[key], dict):
+            typer.echo(f"{key}: {config[key]}")
 
 
 @repo_app.command("browse")
@@ -177,6 +199,86 @@ def workitem_browse(
     url = build_ado_workitem_url(config.server, config.org, config.project, id)
     typer.echo(f"Opening: {url}")
     webbrowser.open(url)
+
+
+@build_app.command("list")
+def build_list(
+    repo_name: str = typer.Option(..., "--repo-name", help="Repository name"),
+    top: int = typer.Option(50, "--top", help="Max builds to return"),
+) -> None:
+    """List recent builds for a repository."""
+    from src.common import ado_repo_db
+    from src.common.ado_client import AdoClient
+    from src.common.ado_exceptions import AdoClientError
+    from src.common.ado_utils import build_ado_build_url
+
+    # Look up repo ID from cache
+    repo_id = ado_repo_db.get_id_by_name(repo_name)
+    if not repo_id:
+        typer.echo(f"Error: {repo_name} not found, please run `ado repo list` first.")
+        raise typer.Exit(code=1)
+
+    # Get builds
+    try:
+        config = AdoConfig()
+        client = AdoClient(config)
+        builds = client.list_builds(repo_id, top=top)
+    except AdoClientError as e:
+        typer.echo(f"Error: {e}")
+        raise typer.Exit(code=1)
+
+    build_config = config.build
+    columns = build_config.columns
+    column_names = build_config.column_names
+
+    # Create rich table
+    console = Console(width=200)
+    table = Table(show_header=True, header_style="bold cyan")
+
+    # Add row ID column first
+    table.add_column("#", style="dim", width=4)
+
+    # Add data columns
+    for column_name in column_names:
+        table.add_column(column_name, no_wrap=True)
+
+    # Add rows
+    for idx, build in enumerate(builds, start=1):
+        row = [str(idx)]  # Start with row ID
+        for col in columns:
+            try:
+                value = get_nested_value(build, col)
+                if value is None:
+                    row.append("—")
+                elif hasattr(value, "strftime"):
+                    row.append(value.strftime("%Y-%m-%d %H:%M"))
+                else:
+                    row.append(str(value))
+            except (AttributeError, KeyError, IndexError):
+                row.append("N/A")
+        table.add_row(*row)
+
+    console.print(table)
+
+    # Handle --open flag
+    if build_config.open and builds:
+        selection = typer.prompt(
+            "Enter build # to open (or press Enter to skip)",
+            default="",
+            show_default=False,
+        )
+        if selection.strip():
+            try:
+                idx = int(selection.strip()) - 1
+                if 0 <= idx < len(builds):
+                    url = build_ado_build_url(
+                        config.server, config.org, config.project, builds[idx].id
+                    )
+                    webbrowser.open(url)
+                else:
+                    typer.echo("Invalid selection.")
+            except ValueError:
+                typer.echo("Invalid input.")
 
 
 @repo_app.command("list")
