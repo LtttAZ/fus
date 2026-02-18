@@ -349,6 +349,23 @@ files = [
 ]
 
 [[package]]
+name = "peewee"
+version = "3.19.0"
+description = "a little orm"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "peewee-3.19.0-py3-none-any.whl", hash = "sha256:de220b94766e6008c466e00ce4ba5299b9a832117d9eb36d45d0062f3cfd7417"},
+    {file = "peewee-3.19.0.tar.gz", hash = "sha256:f88292a6f0d7b906cb26bca9c8599b8f4d8920ebd36124400d0cbaaaf915511f"},
+]
+
+[package.extras]
+mysql = ["pymysql"]
+postgres = ["psycopg2-binary"]
+psycopg3 = ["psycopg[binary]"]
+
+[[package]]
 name = "platformdirs"
 version = "4.9.1"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -829,4 +846,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = "==3.13.2"
-content-hash = "c5968c9aaee925981c8259403d482f4d7c0b190ed6f99eeb4fedb7f35e3cc691"
+content-hash = "6d733894ed7fd294d8c6eca7ea2a4bc60021dd7ffe41f656092837556414fc80"

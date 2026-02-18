@@ -1,9 +1,18 @@
 """SQLite database for caching ADO repository ID/name mappings."""
 
-import sqlite3
 from pathlib import Path
 from typing import Optional, List
 from azure.devops.v7_0.git.models import GitRepository
+from peewee import Model, TextField, SqliteDatabase
+
+
+class Repo(Model):
+    id = TextField(primary_key=True)
+    name = TextField()
+
+    class Meta:
+        table_name = "repos"
+        # No database — bound per-call via bind_ctx
 
 
 def get_db_path() -> Path:
@@ -16,28 +25,14 @@ def get_db_path() -> Path:
     return Path.home() / ".fus" / "ado.db"
 
 
-def _ensure_db_exists(db_path: Path) -> None:
-    """
-    Ensure database directory and table exist.
-
-    Args:
-        db_path: Path to database file
-    """
-    # Create directory if needed
+def _open_db() -> SqliteDatabase:
+    db_path = get_db_path()
     db_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Create table if not exists
-    conn = sqlite3.connect(db_path)
-    try:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS repos (
-                id   TEXT PRIMARY KEY,
-                name TEXT NOT NULL
-            )
-        """)
-        conn.commit()
-    finally:
-        conn.close()
+    database = SqliteDatabase(str(db_path))
+    database.connect()
+    with database.bind_ctx([Repo]):
+        database.create_tables([Repo], safe=True)
+    return database
 
 
 def upsert_all(repos: List[GitRepository]) -> None:
@@ -47,19 +42,14 @@ def upsert_all(repos: List[GitRepository]) -> None:
     Args:
         repos: List of GitRepository objects to cache
     """
-    db_path = get_db_path()
-    _ensure_db_exists(db_path)
-
-    conn = sqlite3.connect(db_path)
+    database = _open_db()
     try:
-        for repo in repos:
-            conn.execute(
-                "INSERT OR REPLACE INTO repos (id, name) VALUES (?, ?)",
-                (repo.id, repo.name)
-            )
-        conn.commit()
+        with database.bind_ctx([Repo]):
+            with database.atomic():
+                for repo in repos:
+                    Repo.replace(id=repo.id, name=repo.name).execute()
     finally:
-        conn.close()
+        database.close()
 
 
 def get_id_by_name(repo_name: str) -> Optional[str]:
@@ -72,16 +62,10 @@ def get_id_by_name(repo_name: str) -> Optional[str]:
     Returns:
         Repository ID (GUID) if found, None otherwise
     """
-    db_path = get_db_path()
-    _ensure_db_exists(db_path)
-
-    conn = sqlite3.connect(db_path)
+    database = _open_db()
     try:
-        cursor = conn.execute(
-            "SELECT id FROM repos WHERE name = ?",
-            (repo_name,)
-        )
-        row = cursor.fetchone()
-        return row[0] if row else None
+        with database.bind_ctx([Repo]):
+            result = Repo.get_or_none(Repo.name == repo_name)
+            return result.id if result else None
     finally:
-        conn.close()
+        database.close()
